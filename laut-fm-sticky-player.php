@@ -3,7 +3,7 @@
  * Plugin Name:       Laut.fm Sticky Player
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station. Stream live radio directly on your WordPress site.
- * Version:           1.0.0
+ * Version:           1.0.1
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,27 +18,25 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Konstanten
-define( 'LFSP_VERSION', '1.0.0' );
+define( 'LFSP_VERSION', '1.0.1' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
 
-// ============================================
-// AUTO-UPDATE VON GITHUB
-// ============================================
-require_once LFSP_PLUGIN_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
+// Auto-Update von GitHub (nur wenn Library vorhanden)
+$lfsp_puc_path = LFSP_PLUGIN_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
+if ( file_exists( $lfsp_puc_path ) ) {
+    require_once $lfsp_puc_path;
 
-use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+    use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
-$lfsp_update_checker = PucFactory::buildUpdateChecker(
-    'https://github.com/matthesv/laut-fm-sticky-player/',  // GitHub Repo URL
-    __FILE__,                                                // Haupt-Plugin-Datei
-    'laut-fm-sticky-player'                                  // Plugin-Slug
-);
-
-// Optional: Auf einen bestimmten Branch hören (Standard: main)
-$lfsp_update_checker->setBranch( 'main' );
+    $lfsp_update_checker = PucFactory::buildUpdateChecker(
+        'https://github.com/matthesv/laut-fm-sticky-player/',
+        __FILE__,
+        'laut-fm-sticky-player'
+    );
+    $lfsp_update_checker->setBranch( 'main' );
+}
 
 // Aktivierung
 register_activation_hook( __FILE__, 'lfsp_activate' );
@@ -67,7 +65,6 @@ function lfsp_activate() {
 // Deaktivierung
 register_deactivation_hook( __FILE__, 'lfsp_deactivate' );
 function lfsp_deactivate() {
-    // Transients aufräumen
     global $wpdb;
     $wpdb->query(
         $wpdb->prepare(
@@ -93,13 +90,18 @@ function lfsp_init() {
 
     $settings = get_option( 'lfsp_settings', array() );
 
-    // Frontend: Nur laden wenn Station konfiguriert
-    if ( ! empty( $settings['station_name'] ) && ! is_admin() ) {
+    if ( ! empty( $settings['station_name'] ) ) {
         $player = new LFSP_Sticky_Player( $settings );
-        $player->init();
+
+        // AJAX-Handler IMMER registrieren (admin-ajax.php läuft im Admin-Kontext)
+        $player->register_ajax();
+
+        // Frontend-Assets und HTML nur außerhalb des Admins
+        if ( ! is_admin() ) {
+            $player->init_frontend();
+        }
     }
 
-    // Admin
     if ( is_admin() ) {
         new LFSP_Admin_Settings();
     }
