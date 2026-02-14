@@ -3,7 +3,7 @@
  * Plugin Name:       Laut.fm Sticky Player
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station. Stream live radio directly on your WordPress site.
- * Version:           1.0.1
+ * Version:           1.0.2
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,25 +18,30 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'LFSP_VERSION', '1.0.1' );
+define( 'LFSP_VERSION', '1.0.2' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
 
-// Auto-Update von GitHub (nur wenn Library vorhanden)
-$lfsp_puc_path = LFSP_PLUGIN_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
-if ( file_exists( $lfsp_puc_path ) ) {
-    require_once $lfsp_puc_path;
+// ============================================
+// AUTO-UPDATE VON GITHUB (abgesichert)
+// ============================================
+$lfsp_puc_file = LFSP_PLUGIN_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
 
-    use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+if ( file_exists( $lfsp_puc_file ) ) {
+    require_once $lfsp_puc_file;
 
-    $lfsp_update_checker = PucFactory::buildUpdateChecker(
-        'https://github.com/matthesv/laut-fm-sticky-player/',
-        __FILE__,
-        'laut-fm-sticky-player'
-    );
-    $lfsp_update_checker->setBranch( 'main' );
+    // Vollqualifizierten Klassennamen nutzen statt "use"
+    if ( class_exists( '\YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
+        $lfsp_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+            'https://github.com/matthesv/laut-fm-sticky-player/',
+            __FILE__,
+            'laut-fm-sticky-player'
+        );
+        $lfsp_update_checker->setBranch( 'main' );
+    }
 }
+
 
 // Aktivierung
 register_activation_hook( __FILE__, 'lfsp_activate' );
