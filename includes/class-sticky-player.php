@@ -39,23 +39,38 @@ class LFSP_Sticky_Player {
             true
         );
 
-        $station = sanitize_key( $this->settings['station_name'] );
+        $station          = sanitize_key( $this->settings['station_name'] );
+        $custom_stream    = trim( $this->settings['custom_stream_url'] ?? '' );
+        $inline_playback  = ! empty( $this->settings['inline_playback'] );
+        $use_custom       = ! empty( $custom_stream );
+        $allow_inline     = $use_custom || $inline_playback;
+
+        $stream_url = $use_custom
+            ? esc_url( $custom_stream )
+            : esc_url( LFSP_Lautfm_API::get_stream_url( $station ) );
+
+        $popup_url = 'https://laut.fm/' . rawurlencode( $station );
 
         wp_localize_script( 'lfsp-sticky-player', 'lfspConfig', array(
-            'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
-            'nonce'          => wp_create_nonce( 'lfsp_nonce' ),
-            'streamUrl'      => esc_url( LFSP_Lautfm_API::get_stream_url( $station ) ),
-            'stationName'    => $station,
-            'autoplay'       => ! empty( $this->settings['autoplay'] ),
-            'defaultClosed'  => ! empty( $this->settings['default_closed'] ),
-            'updateInterval' => 30000,
-            'i18n'           => array(
+            'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+            'nonce'           => wp_create_nonce( 'lfsp_nonce' ),
+            'streamUrl'       => $stream_url,
+            'stationName'     => $station,
+            'autoplay'        => ! empty( $this->settings['autoplay'] ) && $allow_inline,
+            'defaultClosed'   => ! empty( $this->settings['default_closed'] ),
+            'updateInterval'  => 30000,
+            'inlinePlayback'  => $allow_inline,
+            'popupUrl'        => esc_url( $popup_url ),
+            'popupWidth'      => 500,
+            'popupHeight'     => 600,
+            'i18n'            => array(
                 'play'        => esc_html__( 'Play', 'laut-fm-sticky-player' ),
                 'pause'       => esc_html__( 'Pause', 'laut-fm-sticky-player' ),
                 'loading'     => esc_html__( 'Loading...', 'laut-fm-sticky-player' ),
                 'liveNow'     => esc_html__( 'Live', 'laut-fm-sticky-player' ),
                 'toggleOpen'  => esc_html__( 'Open Player', 'laut-fm-sticky-player' ),
                 'toggleClose' => esc_html__( 'Close Player', 'laut-fm-sticky-player' ),
+                'openPopup'   => esc_html__( 'Open laut.fm', 'laut-fm-sticky-player' ),
             ),
         ) );
     }
@@ -88,9 +103,11 @@ class LFSP_Sticky_Player {
         $show_mobile    = ! empty( $this->settings['show_on_mobile'] );
         $show_soundnode = ! empty( $this->settings['show_soundnode'] );
         $stream_label   = sanitize_text_field( $this->settings['stream_link_label'] ?? 'STREAM' );
+        $default_closed = ! empty( $this->settings['default_closed'] );
 
         $mobile_class  = $show_mobile ? '' : ' lfsp-hide-mobile';
-        $wrapper_class = ! empty( $this->settings['default_closed'] ) ? ' lfsp-closed' : '';
+        $wrapper_class = $default_closed ? ' lfsp-closed' : '';
+        $aria_expanded = $default_closed ? 'false' : 'true';
         ?>
 
         <div id="lfsp-sticky-wrapper"
@@ -104,7 +121,7 @@ class LFSP_Sticky_Player {
                     class="lfsp-toggle-btn"
                     type="button"
                     aria-label="<?php esc_attr_e( 'Toggle Player', 'laut-fm-sticky-player' ); ?>"
-                    aria-expanded="true">
+                    aria-expanded="<?php echo esc_attr( $aria_expanded ); ?>">
                 <span class="lfsp-toggle-icon" aria-hidden="true">&#9660;</span>
             </button>
             <?php endif; ?>
@@ -119,7 +136,7 @@ class LFSP_Sticky_Player {
                                 aria-label="<?php esc_attr_e( 'Play', 'laut-fm-sticky-player' ); ?>">
                             <span class="lfsp-icon-play" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="20" height="20">
-                                    <polygon points="6,3 20,12 6,21" fill="currentColor"/>
+                                    <polygon points="7,3 21,12 7,21" fill="currentColor"/>
                                 </svg>
                             </span>
                             <span class="lfsp-icon-pause" aria-hidden="true" style="display:none;">
@@ -157,7 +174,7 @@ class LFSP_Sticky_Player {
                         <div id="lfsp-clock" class="lfsp-time">--:--</div>
                         <?php endif; ?>
 
-                        <a href="<?php echo esc_url( LFSP_Lautfm_API::get_stream_url( $station ) ); ?>"
+                        <a href="<?php echo esc_url( 'https://laut.fm/' . rawurlencode( $station ) ); ?>"
                            target="_blank"
                            rel="noopener noreferrer"
                            class="lfsp-link lfsp-stream-link">

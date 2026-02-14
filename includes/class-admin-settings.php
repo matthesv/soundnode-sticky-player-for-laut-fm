@@ -69,6 +69,18 @@ class LFSP_Admin_Settings {
         $this->add_field( 'autoplay', __( 'Autoplay', 'laut-fm-sticky-player' ), 'field_autoplay', 'lfsp_section_station' );
 
         add_settings_section(
+            'lfsp_section_stream',
+            __( '📡 Stream / AGB Compliance', 'laut-fm-sticky-player' ),
+            function () {
+                echo '<p>' . esc_html__( 'Configure how the audio stream is played. By default, the laut.fm stream opens in a popup window to comply with laut.fm Terms of Service (§6 Nr. 9).', 'laut-fm-sticky-player' ) . '</p>';
+            },
+            'laut-fm-sticky-player'
+        );
+
+        $this->add_field( 'inline_playback', __( 'Inline Playback (AGB Override)', 'laut-fm-sticky-player' ), 'field_inline_playback', 'lfsp_section_stream' );
+        $this->add_field( 'custom_stream_url', __( 'Custom Stream URL', 'laut-fm-sticky-player' ), 'field_custom_stream_url', 'lfsp_section_stream' );
+
+        add_settings_section(
             'lfsp_section_design',
             __( '🎨 Design Settings', 'laut-fm-sticky-player' ),
             function () {
@@ -122,6 +134,8 @@ class LFSP_Admin_Settings {
         $s['station_name']      = sanitize_key( $input['station_name'] ?? '' );
         $s['station_slogan']    = sanitize_text_field( $input['station_slogan'] ?? '' );
         $s['autoplay']          = ! empty( $input['autoplay'] );
+        $s['inline_playback']   = ! empty( $input['inline_playback'] );
+        $s['custom_stream_url'] = esc_url_raw( trim( $input['custom_stream_url'] ?? '' ) );
         $s['player_position']   = in_array( $input['player_position'] ?? '', array( 'top', 'bottom', 'left', 'right' ), true )
             ? $input['player_position'] : 'bottom';
         $s['player_height']     = absint( $input['player_height'] ?? 90 );
@@ -184,6 +198,27 @@ class LFSP_Admin_Settings {
 
     public function field_autoplay() {
         $this->render_checkbox( 'autoplay', __( 'Auto-play on page load (may be blocked by browsers)', 'laut-fm-sticky-player' ) );
+    }
+
+    public function field_inline_playback() {
+        $checked = ! empty( $this->get_setting( 'inline_playback' ) ) ? 'checked' : '';
+        echo '<label>';
+        echo '<input type="checkbox" name="lfsp_settings[inline_playback]" value="1" ' . $checked . '> ';
+        echo esc_html__( 'Play the laut.fm stream directly on this website (inline)', 'laut-fm-sticky-player' );
+        echo '</label>';
+        echo '<div style="margin-top: 10px; padding: 12px 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 3px;">';
+        echo '<strong>⚠️ Warnung:</strong> Das direkte Abspielen des laut.fm-Streams auf Ihrer Website verstößt gegen <strong>§6 Nr. 9 der laut.fm AGB</strong>. ';
+        echo 'Laut AGB ist nur eine Verlinkung erlaubt, die laut.fm in einem neuen Fenster öffnet. Aktivieren Sie diese Option nur auf eigenes Risiko.<br><br>';
+        echo '<strong>⚠️ Warning:</strong> Embedding the laut.fm audio stream directly on your website violates <strong>§6 No. 9 of the laut.fm Terms of Service</strong>. ';
+        echo 'According to the ToS, only links that open laut.fm in a new window are permitted. Enable this option at your own risk.';
+        echo '</div>';
+        echo '<p class="description">' . esc_html__( 'When disabled (default), clicking Play opens the laut.fm station page in a popup window.', 'laut-fm-sticky-player' ) . '</p>';
+    }
+
+    public function field_custom_stream_url() {
+        $v = $this->get_setting( 'custom_stream_url' );
+        echo '<input type="url" name="lfsp_settings[custom_stream_url]" value="' . esc_attr( $v ) . '" class="regular-text" placeholder="https://your-icecast-server.com:8000/stream">';
+        echo '<p class="description">' . esc_html__( 'Optional: Enter a custom stream URL (e.g., Icecast/Shoutcast). When set, this URL is used instead of the laut.fm stream and inline playback is always allowed (the laut.fm AGB restriction does not apply to non-laut.fm streams).', 'laut-fm-sticky-player' ) . '</p>';
     }
 
     public function field_position() {

@@ -3,7 +3,7 @@
  * Plugin Name:       Laut.fm Sticky Player
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station.
- * Version:           1.0.7
+ * Version:           1.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'LFSP_VERSION', '1.0.7' );
+define( 'LFSP_VERSION', '1.1.0' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
@@ -56,6 +56,8 @@ function lfsp_activate() {
         'autoplay'          => false,
         'stream_link_label' => 'STREAM',
         'default_closed'    => false,
+        'inline_playback'   => false,
+        'custom_stream_url' => '',
     );
     add_option( 'lfsp_settings', $defaults );
     add_option( 'lfsp_version', LFSP_VERSION );
