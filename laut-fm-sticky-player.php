@@ -23,21 +23,6 @@ define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
 
-$lfsp_puc_file = LFSP_PLUGIN_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
-
-if ( file_exists( $lfsp_puc_file ) ) {
-    require_once $lfsp_puc_file;
-
-    if ( class_exists( '\YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
-        $lfsp_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-            'https://github.com/matthesv/laut-fm-sticky-player/',
-            __FILE__,
-            'laut-fm-sticky-player'
-        );
-        $lfsp_update_checker->setBranch( 'main' );
-    }
-}
-
 register_activation_hook( __FILE__, 'lfsp_activate' );
 function lfsp_activate() {
     $defaults = array(
@@ -65,14 +50,15 @@ function lfsp_activate() {
 
 register_deactivation_hook( __FILE__, 'lfsp_deactivate' );
 function lfsp_deactivate() {
-    global $wpdb;
-    $wpdb->query(
-        $wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-            $wpdb->esc_like( '_transient_lfsp_' ) . '%',
-            $wpdb->esc_like( '_transient_timeout_lfsp_' ) . '%'
-        )
-    );
+    $settings = get_option( 'lfsp_settings', array() );
+    $station  = $settings['station_name'] ?? '';
+
+    if ( ! empty( $station ) ) {
+        $hash = md5( sanitize_key( $station ) );
+        delete_transient( 'lfsp_station_' . $hash );
+        delete_transient( 'lfsp_song_' . $hash );
+        delete_transient( 'lfsp_lastsongs_' . $hash );
+    }
 }
 
 require_once LFSP_PLUGIN_PATH . 'includes/class-lautfm-api.php';
@@ -80,12 +66,6 @@ require_once LFSP_PLUGIN_PATH . 'includes/class-sticky-player.php';
 require_once LFSP_PLUGIN_PATH . 'includes/class-admin-settings.php';
 
 function lfsp_init() {
-    load_plugin_textdomain(
-        'laut-fm-sticky-player',
-        false,
-        dirname( LFSP_BASENAME ) . '/languages'
-    );
-
     lfsp_maybe_migrate_settings();
 
     $settings = get_option( 'lfsp_settings', array() );
@@ -119,10 +99,10 @@ function lfsp_maybe_migrate_settings() {
 }
 
 function lfsp_render_admin_notice() {
-    $url = esc_url( admin_url( 'options-general.php?page=laut-fm-sticky-player' ) );
-    echo '<!-- LFSP: No station configured. Visit ' . $url . ' -->';
+    $url = admin_url( 'options-general.php?page=laut-fm-sticky-player' );
+
     echo '<div style="position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:12px 20px;z-index:999999;font-family:sans-serif;font-size:14px;text-align:center;">';
-    echo 'Laut.fm Sticky Player: <a href="' . $url . '" style="color:#00f0ff;text-decoration:underline;">Bitte zuerst einen Stationsnamen eingeben &rarr;</a>';
+    echo 'Laut.fm Sticky Player: <a href="' . esc_url( $url ) . '" style="color:#00f0ff;text-decoration:underline;">' . esc_html__( 'Bitte zuerst einen Stationsnamen eingeben →', 'laut-fm-sticky-player' ) . '</a>';
     echo '</div>';
 }
 

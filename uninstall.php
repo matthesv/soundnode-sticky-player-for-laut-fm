@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall handler
+ * Uninstall cleanup for Laut.fm Sticky Player.
  *
  * @package LFSP
  */
@@ -9,16 +9,15 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
     exit;
 }
 
-// Optionen entfernen
+$settings = get_option( 'lfsp_settings', array() );
+$station  = $settings['station_name'] ?? '';
+
+if ( ! empty( $station ) ) {
+    $hash = md5( sanitize_key( $station ) );
+    delete_transient( 'lfsp_station_' . $hash );
+    delete_transient( 'lfsp_song_' . $hash );
+    delete_transient( 'lfsp_lastsongs_' . $hash );
+}
+
 delete_option( 'lfsp_settings' );
 delete_option( 'lfsp_version' );
-
-// Alle Transients aufräumen
-global $wpdb;
-$wpdb->query(
-    $wpdb->prepare(
-        "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-        $wpdb->esc_like( '_transient_lfsp_' ) . '%',
-        $wpdb->esc_like( '_transient_timeout_lfsp_' ) . '%'
-    )
-);
