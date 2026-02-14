@@ -39,38 +39,50 @@ class LFSP_Sticky_Player {
             true
         );
 
-        $station          = sanitize_key( $this->settings['station_name'] );
-        $custom_stream    = trim( $this->settings['custom_stream_url'] ?? '' );
-        $inline_playback  = ! empty( $this->settings['inline_playback'] );
-        $use_custom       = ! empty( $custom_stream );
-        $allow_inline     = $use_custom || $inline_playback;
+        $station        = sanitize_key( $this->settings['station_name'] );
+        $custom_stream  = trim( $this->settings['custom_stream_url'] ?? '' );
+        $playback_mode  = $this->settings['playback_mode'] ?? 'popup_website';
+        $use_custom     = ! empty( $custom_stream );
+
+        if ( $use_custom ) {
+            $playback_mode = 'inline';
+        }
 
         $stream_url = $use_custom
             ? esc_url( $custom_stream )
             : esc_url( LFSP_Lautfm_API::get_stream_url( $station ) );
 
-        $popup_url = 'https://laut.fm/' . rawurlencode( $station );
+        $popup_url    = 'https://laut.fm/' . rawurlencode( $station );
+        $popup_width  = 500;
+        $popup_height = 600;
+
+        if ( 'popup_stream' === $playback_mode ) {
+            $popup_url    = 'https://stream.laut.fm/' . rawurlencode( $station );
+            $popup_width  = 400;
+            $popup_height = 200;
+        }
 
         wp_localize_script( 'lfsp-sticky-player', 'lfspConfig', array(
             'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
             'nonce'           => wp_create_nonce( 'lfsp_nonce' ),
             'streamUrl'       => $stream_url,
             'stationName'     => $station,
-            'autoplay'        => ! empty( $this->settings['autoplay'] ) && $allow_inline,
+            'autoplay'        => ! empty( $this->settings['autoplay'] ) && 'inline' === $playback_mode,
             'defaultClosed'   => ! empty( $this->settings['default_closed'] ),
             'updateInterval'  => 30000,
-            'inlinePlayback'  => $allow_inline,
+            'playbackMode'    => $playback_mode,
             'popupUrl'        => esc_url( $popup_url ),
-            'popupWidth'      => 500,
-            'popupHeight'     => 600,
+            'popupWidth'      => $popup_width,
+            'popupHeight'     => $popup_height,
             'i18n'            => array(
-                'play'        => esc_html__( 'Play', 'laut-fm-sticky-player' ),
-                'pause'       => esc_html__( 'Pause', 'laut-fm-sticky-player' ),
-                'loading'     => esc_html__( 'Loading...', 'laut-fm-sticky-player' ),
-                'liveNow'     => esc_html__( 'Live', 'laut-fm-sticky-player' ),
-                'toggleOpen'  => esc_html__( 'Open Player', 'laut-fm-sticky-player' ),
-                'toggleClose' => esc_html__( 'Close Player', 'laut-fm-sticky-player' ),
-                'openPopup'   => esc_html__( 'Open laut.fm', 'laut-fm-sticky-player' ),
+                'play'           => esc_html__( 'Play', 'laut-fm-sticky-player' ),
+                'pause'          => esc_html__( 'Pause', 'laut-fm-sticky-player' ),
+                'loading'        => esc_html__( 'Loading...', 'laut-fm-sticky-player' ),
+                'liveNow'        => esc_html__( 'Live', 'laut-fm-sticky-player' ),
+                'toggleOpen'     => esc_html__( 'Open Player', 'laut-fm-sticky-player' ),
+                'toggleClose'    => esc_html__( 'Close Player', 'laut-fm-sticky-player' ),
+                'openPopup'      => esc_html__( 'Open laut.fm', 'laut-fm-sticky-player' ),
+                'openStreamPopup'=> esc_html__( 'Open Stream', 'laut-fm-sticky-player' ),
             ),
         ) );
     }

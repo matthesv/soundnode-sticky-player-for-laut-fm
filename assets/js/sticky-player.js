@@ -30,7 +30,7 @@
             return;
         }
 
-        if (lfspConfig.inlinePlayback) {
+        if (lfspConfig.playbackMode === 'inline') {
             audio = new Audio();
             audio.preload = 'none';
             audio.volume  = 0.8;
@@ -52,8 +52,11 @@
                 updatePlayButton(false);
             });
         } else {
+            var popupLabel = lfspConfig.playbackMode === 'popup_stream'
+                ? lfspConfig.i18n.openStreamPopup
+                : lfspConfig.i18n.openPopup;
             if (els.playBtn) {
-                els.playBtn.setAttribute('aria-label', lfspConfig.i18n.openPopup || lfspConfig.i18n.play);
+                els.playBtn.setAttribute('aria-label', popupLabel || lfspConfig.i18n.play);
             }
         }
 
@@ -76,7 +79,7 @@
         fetchSongData();
         songTimer = setInterval(fetchSongData, parseInt(lfspConfig.updateInterval, 10) || 30000);
 
-        if (lfspConfig.autoplay) play();
+        if (lfspConfig.autoplay && lfspConfig.playbackMode === 'inline') play();
 
         document.addEventListener('keydown', handleKeyboard);
     }
@@ -98,7 +101,7 @@
     }
 
     function play() {
-        if (!lfspConfig.inlinePlayback) {
+        if (lfspConfig.playbackMode !== 'inline') {
             openPopup();
             return;
         }
@@ -133,7 +136,7 @@
     }
 
     function togglePlay() {
-        if (!lfspConfig.inlinePlayback) {
+        if (lfspConfig.playbackMode !== 'inline') {
             openPopup();
             return;
         }

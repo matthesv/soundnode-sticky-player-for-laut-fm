@@ -3,7 +3,7 @@
  * Plugin Name:       Laut.fm Sticky Player
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station.
- * Version:           1.1.1
+ * Version:           1.2.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'LFSP_VERSION', '1.1.1' );
+define( 'LFSP_VERSION', '1.2.0' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
@@ -56,7 +56,7 @@ function lfsp_activate() {
         'autoplay'          => false,
         'stream_link_label' => 'STREAM',
         'default_closed'    => false,
-        'inline_playback'   => false,
+        'playback_mode'     => 'popup_website',
         'custom_stream_url' => '',
     );
     add_option( 'lfsp_settings', $defaults );
@@ -86,6 +86,8 @@ function lfsp_init() {
         dirname( LFSP_BASENAME ) . '/languages'
     );
 
+    lfsp_maybe_migrate_settings();
+
     $settings = get_option( 'lfsp_settings', array() );
     $station  = $settings['station_name'] ?? '';
 
@@ -105,6 +107,16 @@ function lfsp_init() {
     }
 }
 add_action( 'plugins_loaded', 'lfsp_init' );
+
+function lfsp_maybe_migrate_settings() {
+    $settings = get_option( 'lfsp_settings', array() );
+
+    if ( isset( $settings['inline_playback'] ) && ! isset( $settings['playback_mode'] ) ) {
+        $settings['playback_mode'] = ! empty( $settings['inline_playback'] ) ? 'inline' : 'popup_website';
+        unset( $settings['inline_playback'] );
+        update_option( 'lfsp_settings', $settings );
+    }
+}
 
 function lfsp_render_admin_notice() {
     $url = esc_url( admin_url( 'options-general.php?page=laut-fm-sticky-player' ) );

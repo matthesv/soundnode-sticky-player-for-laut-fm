@@ -70,14 +70,14 @@ class LFSP_Admin_Settings {
 
         add_settings_section(
             'lfsp_section_stream',
-            __( '📡 Stream / AGB Compliance', 'laut-fm-sticky-player' ),
+            __( '📡 Playback Mode / AGB Compliance', 'laut-fm-sticky-player' ),
             function () {
-                echo '<p>' . esc_html__( 'Configure how the audio stream is played. By default, the laut.fm stream opens in a popup window to comply with laut.fm Terms of Service (§6 Nr. 9).', 'laut-fm-sticky-player' ) . '</p>';
+                echo '<p>' . esc_html__( 'Configure how the audio stream is played. By default, the laut.fm website opens in a popup window to comply with laut.fm Terms of Service (§6 Nr. 9).', 'laut-fm-sticky-player' ) . '</p>';
             },
             'laut-fm-sticky-player'
         );
 
-        $this->add_field( 'inline_playback', __( 'Inline Playback (AGB Override)', 'laut-fm-sticky-player' ), 'field_inline_playback', 'lfsp_section_stream' );
+        $this->add_field( 'playback_mode', __( 'Playback Mode', 'laut-fm-sticky-player' ), 'field_playback_mode', 'lfsp_section_stream' );
         $this->add_field( 'custom_stream_url', __( 'Custom Stream URL', 'laut-fm-sticky-player' ), 'field_custom_stream_url', 'lfsp_section_stream' );
 
         add_settings_section(
@@ -134,7 +134,11 @@ class LFSP_Admin_Settings {
         $s['station_name']      = sanitize_key( $input['station_name'] ?? '' );
         $s['station_slogan']    = sanitize_text_field( $input['station_slogan'] ?? '' );
         $s['autoplay']          = ! empty( $input['autoplay'] );
-        $s['inline_playback']   = ! empty( $input['inline_playback'] );
+
+        $valid_modes = array( 'popup_website', 'popup_stream', 'inline' );
+        $s['playback_mode']     = in_array( $input['playback_mode'] ?? '', $valid_modes, true )
+            ? $input['playback_mode'] : 'popup_website';
+
         $s['custom_stream_url'] = esc_url_raw( trim( $input['custom_stream_url'] ?? '' ) );
         $s['player_position']   = in_array( $input['player_position'] ?? '', array( 'top', 'bottom', 'left', 'right' ), true )
             ? $input['player_position'] : 'bottom';
@@ -197,36 +201,58 @@ class LFSP_Admin_Settings {
     }
 
     public function field_autoplay() {
-        $this->render_checkbox( 'autoplay', __( 'Auto-play on page load (may be blocked by browsers)', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'autoplay', __( 'Auto-play on page load (may be blocked by browsers, only works with Inline mode)', 'laut-fm-sticky-player' ) );
     }
 
-    public function field_inline_playback() {
-        $checked = ! empty( $this->get_setting( 'inline_playback' ) ) ? 'checked' : '';
+    public function field_playback_mode() {
+        $v = $this->get_setting( 'playback_mode', 'popup_website' );
 
         $allowed_html = array(
             'strong' => array(),
             'br'     => array(),
+            'code'   => array(),
         );
 
-        echo '<label>';
-        echo '<input type="checkbox" name="lfsp_settings[inline_playback]" value="1" ' . $checked . '> ';
-        echo esc_html__( 'Play the laut.fm stream directly on this website (inline)', 'laut-fm-sticky-player' );
-        echo '</label>';
+        echo '<select name="lfsp_settings[playback_mode]" id="lfsp-playback-mode">';
+        echo '<option value="popup_website" ' . selected( $v, 'popup_website', false ) . '>';
+        echo esc_html__( '🌐 Website Popup (laut.fm/station) – AGB compliant', 'laut-fm-sticky-player' );
+        echo '</option>';
+        echo '<option value="popup_stream" ' . selected( $v, 'popup_stream', false ) . '>';
+        echo esc_html__( '🎵 Stream Mini-Popup (stream.laut.fm/station)', 'laut-fm-sticky-player' );
+        echo '</option>';
+        echo '<option value="inline" ' . selected( $v, 'inline', false ) . '>';
+        echo esc_html__( '⚡ Inline Playback (embedded on this site)', 'laut-fm-sticky-player' );
+        echo '</option>';
+        echo '</select>';
 
-        echo '<div style="margin-top: 10px; padding: 12px 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 3px;">';
+        echo '<div style="margin-top: 12px;">';
+
+        echo '<div class="lfsp-mode-info" data-mode="popup_website" style="padding: 10px 14px; background: #d4edda; border-left: 4px solid #28a745; border-radius: 3px; margin-bottom: 8px;">';
+        echo '<strong>✅ ' . esc_html__( 'Recommended:', 'laut-fm-sticky-player' ) . '</strong> ';
+        echo esc_html__( 'Opens the full laut.fm station page in a popup window. Fully compliant with laut.fm Terms of Service (§6 Nr. 9).', 'laut-fm-sticky-player' );
+        echo '</div>';
+
+        echo '<div class="lfsp-mode-info" data-mode="popup_stream" style="padding: 10px 14px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 3px; margin-bottom: 8px; display: none;">';
+        echo '<strong>⚠️ ' . esc_html__( 'Caution:', 'laut-fm-sticky-player' ) . '</strong> ';
+        echo esc_html__( 'Opens a small popup with only the audio stream. This still opens a laut.fm URL but may not fully comply with the ToS intent.', 'laut-fm-sticky-player' );
+        echo '</div>';
+
+        echo '<div class="lfsp-mode-info" data-mode="inline" style="padding: 10px 14px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 3px; margin-bottom: 8px; display: none;">';
         echo wp_kses(
-            __( '<strong>⚠️ Warning:</strong> Embedding the laut.fm audio stream directly on your website violates <strong>§6 No. 9 of the laut.fm Terms of Service</strong>. According to the ToS, only links that open laut.fm in a new window are permitted. Enable this option at your own risk.', 'laut-fm-sticky-player' ),
+            __( '<strong>🚫 Warning:</strong> Embedding the laut.fm audio stream directly on your website violates <strong>§6 No. 9 of the laut.fm Terms of Service</strong>. Enable this option at your own risk.', 'laut-fm-sticky-player' ),
             $allowed_html
         );
         echo '</div>';
 
-        echo '<p class="description">' . esc_html__( 'When disabled (default), clicking Play opens the laut.fm station page in a popup window.', 'laut-fm-sticky-player' ) . '</p>';
+        echo '</div>';
+
+        echo '<p class="description">' . esc_html__( 'Choose how the stream is played when clicking the Play button.', 'laut-fm-sticky-player' ) . '</p>';
     }
 
     public function field_custom_stream_url() {
         $v = $this->get_setting( 'custom_stream_url' );
         echo '<input type="url" name="lfsp_settings[custom_stream_url]" value="' . esc_attr( $v ) . '" class="regular-text" placeholder="https://your-icecast-server.com:8000/stream">';
-        echo '<p class="description">' . esc_html__( 'Optional: Enter a custom stream URL (e.g., Icecast/Shoutcast). When set, this URL is used instead of the laut.fm stream and inline playback is always allowed (the laut.fm AGB restriction does not apply to non-laut.fm streams).', 'laut-fm-sticky-player' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Optional: Enter a custom stream URL (e.g., Icecast/Shoutcast). When set, this URL is used instead of the laut.fm stream and playback mode is forced to Inline (the laut.fm AGB restriction does not apply to non-laut.fm streams).', 'laut-fm-sticky-player' ) . '</p>';
     }
 
     public function field_position() {
