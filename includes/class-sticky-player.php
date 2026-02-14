@@ -1,10 +1,4 @@
 <?php
-/**
- * Sticky Player Frontend
- *
- * @package LFSP
- */
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -17,25 +11,16 @@ class LFSP_Sticky_Player {
         $this->settings = $settings;
     }
 
-    /**
-     * AJAX-Handler registrieren (muss auch im Admin-Kontext laufen, da admin-ajax.php is_admin() === true)
-     */
     public function register_ajax() {
         add_action( 'wp_ajax_lfsp_get_song_data', array( $this, 'ajax_get_song_data' ) );
         add_action( 'wp_ajax_nopriv_lfsp_get_song_data', array( $this, 'ajax_get_song_data' ) );
     }
 
-    /**
-     * Frontend-Hooks registrieren (Assets + HTML-Ausgabe)
-     */
     public function init_frontend() {
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
         add_action( 'wp_footer', array( $this, 'render_player' ) );
     }
 
-    /**
-     * Assets laden + Inline-CSS-Variablen injizieren
-     */
     public function enqueue_assets() {
         wp_enqueue_style(
             'lfsp-sticky-player',
@@ -44,7 +29,6 @@ class LFSP_Sticky_Player {
             LFSP_VERSION
         );
 
-        // Custom CSS-Variablen direkt nach dem Stylesheet einfügen (nicht erst im Footer)
         wp_add_inline_style( 'lfsp-sticky-player', $this->get_custom_css() );
 
         wp_enqueue_script(
@@ -57,11 +41,10 @@ class LFSP_Sticky_Player {
 
         $station = sanitize_key( $this->settings['station_name'] );
 
-        // wp_localize_script escaped selbst – kein esc_url() nötig
         wp_localize_script( 'lfsp-sticky-player', 'lfspConfig', array(
             'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
             'nonce'          => wp_create_nonce( 'lfsp_nonce' ),
-            'streamUrl'      => LFSP_Lautfm_API::get_stream_url( $station ),
+            'streamUrl'      => esc_url( LFSP_Lautfm_API::get_stream_url( $station ) ),
             'stationName'    => $station,
             'autoplay'       => ! empty( $this->settings['autoplay'] ),
             'defaultClosed'  => ! empty( $this->settings['default_closed'] ),
@@ -77,9 +60,6 @@ class LFSP_Sticky_Player {
         ) );
     }
 
-    /**
-     * Custom CSS-Variablen generieren
-     */
     private function get_custom_css() {
         return sprintf(
             ':root {
@@ -99,9 +79,6 @@ class LFSP_Sticky_Player {
         );
     }
 
-    /**
-     * Player HTML rendern
-     */
     public function render_player() {
         $station        = sanitize_key( $this->settings['station_name'] );
         $slogan         = sanitize_text_field( $this->settings['station_slogan'] ?? '' );
@@ -128,7 +105,7 @@ class LFSP_Sticky_Player {
                     type="button"
                     aria-label="<?php esc_attr_e( 'Toggle Player', 'laut-fm-sticky-player' ); ?>"
                     aria-expanded="true">
-                <span class="lfsp-toggle-icon" aria-hidden="true">▾</span>
+                <span class="lfsp-toggle-icon" aria-hidden="true">&#9660;</span>
             </button>
             <?php endif; ?>
 
@@ -158,7 +135,7 @@ class LFSP_Sticky_Player {
                                     class="lfsp-mute-btn"
                                     type="button"
                                     aria-label="<?php esc_attr_e( 'Mute', 'laut-fm-sticky-player' ); ?>">
-                                <span class="lfsp-volume-icon" aria-hidden="true">🔊</span>
+                                <span class="lfsp-volume-icon" aria-hidden="true">&#128266;</span>
                             </button>
                             <input type="range"
                                    id="lfsp-volume-slider"
@@ -169,13 +146,9 @@ class LFSP_Sticky_Player {
                     </div>
 
                     <div class="lfsp-song-info">
-                        <div id="lfsp-song-title" class="lfsp-title">
-                            <?php esc_html_e( 'Loading...', 'laut-fm-sticky-player' ); ?>
-                        </div>
+                        <div id="lfsp-song-title" class="lfsp-title"><?php esc_html_e( 'Loading...', 'laut-fm-sticky-player' ); ?></div>
                         <?php if ( ! empty( $slogan ) ) : ?>
-                        <div class="lfsp-subtitle">
-                            <?php echo esc_html( $slogan ); ?>
-                        </div>
+                        <div class="lfsp-subtitle"><?php echo esc_html( $slogan ); ?></div>
                         <?php endif; ?>
                     </div>
 
@@ -208,9 +181,6 @@ class LFSP_Sticky_Player {
         <?php
     }
 
-    /**
-     * AJAX: Song-Daten abrufen
-     */
     public function ajax_get_song_data() {
         check_ajax_referer( 'lfsp_nonce', 'nonce' );
 
@@ -222,23 +192,28 @@ class LFSP_Sticky_Player {
             wp_send_json_error( array( 'message' => 'No station specified.' ) );
         }
 
-        $songs = LFSP_Lautfm_API::get_last_songs( $station );
+        // Primär: current_song (einzelnes Objekt)
+        $song = LFSP_Lautfm_API::get_current_song( $station );
 
-        if ( false === $songs || empty( $songs ) ) {
-            wp_send_json_error( array( 'message' => 'Could not fetch song data.' ) );
+        // Fallback: last_songs (Array, erstes Element nehmen)
+        if ( false === $song || empty( $song ) ) {
+            $songs = LFSP_Lautfm_API::get_last_songs( $station );
+            if ( false === $songs || empty( $songs ) ) {
+                wp_send_json_error( array( 'message' => 'Could not fetch song data.' ) );
+            }
+            $song = $songs[0];
         }
 
-        $track = $songs[0];
-        $type  = sanitize_text_field( $track['type'] ?? '' );
+        $type = sanitize_text_field( $song['type'] ?? '' );
 
         $result = array(
             'type'   => $type,
             'artist' => '',
-            'title'  => sanitize_text_field( $track['title'] ?? '' ),
+            'title'  => sanitize_text_field( $song['title'] ?? '' ),
         );
 
         if ( 'song' === $type ) {
-            $result['artist'] = sanitize_text_field( $track['artist']['name'] ?? '' );
+            $result['artist'] = sanitize_text_field( $song['artist']['name'] ?? '' );
         }
 
         wp_send_json_success( $result );

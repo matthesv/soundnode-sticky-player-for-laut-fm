@@ -1,8 +1,3 @@
-/**
- * Laut.fm Sticky Player - Frontend JavaScript
- *
- * @package LFSP
- */
 (function () {
     'use strict';
 
@@ -11,10 +6,11 @@
     var isMuted    = false;
     var songTimer  = null;
     var clockTimer = null;
-
-    var els = {};
+    var els        = {};
 
     function init() {
+        if (typeof lfspConfig === 'undefined') return;
+
         els.wrapper      = document.getElementById('lfsp-sticky-wrapper');
         els.playBtn      = document.getElementById('lfsp-play-btn');
         els.toggleBtn    = document.getElementById('lfsp-toggle-btn');
@@ -31,21 +27,26 @@
         audio.preload = 'none';
         audio.volume  = 0.8;
 
-        if (els.playBtn) {
-            els.playBtn.addEventListener('click', togglePlay);
-        }
+        audio.addEventListener('waiting', function () {
+            if (els.playBtn) els.playBtn.classList.add('lfsp-buffering');
+        });
 
-        if (els.toggleBtn) {
-            els.toggleBtn.addEventListener('click', togglePlayer);
-        }
+        audio.addEventListener('playing', function () {
+            if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
+            isPlaying = true;
+            updatePlayButton(true);
+        });
 
-        if (els.volumeSlider) {
-            els.volumeSlider.addEventListener('input', handleVolume);
-        }
+        audio.addEventListener('error', function () {
+            if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
+            isPlaying = false;
+            updatePlayButton(false);
+        });
 
-        if (els.muteBtn) {
-            els.muteBtn.addEventListener('click', toggleMute);
-        }
+        if (els.playBtn) els.playBtn.addEventListener('click', togglePlay);
+        if (els.toggleBtn) els.toggleBtn.addEventListener('click', togglePlayer);
+        if (els.volumeSlider) els.volumeSlider.addEventListener('input', handleVolume);
+        if (els.muteBtn) els.muteBtn.addEventListener('click', toggleMute);
 
         restorePlayerState();
 
@@ -55,9 +56,7 @@
         fetchSongData();
         songTimer = setInterval(fetchSongData, lfspConfig.updateInterval || 30000);
 
-        if (lfspConfig.autoplay) {
-            play();
-        }
+        if (lfspConfig.autoplay) play();
 
         document.addEventListener('keydown', handleKeyboard);
     }
@@ -65,26 +64,31 @@
     function play() {
         if (!audio || !lfspConfig.streamUrl) return;
 
-        audio.src = lfspConfig.streamUrl;
-        audio.load();
+        if (els.playBtn) els.playBtn.classList.add('lfsp-buffering');
 
-        audio.play()
-            .then(function () {
-                isPlaying = true;
-                updatePlayButton(true);
-            })
-            .catch(function (err) {
-                console.warn('LFSP: Playback blocked -', err.message);
-            });
+        audio.src = lfspConfig.streamUrl;
+
+        var playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise
+                .then(function () {
+                    isPlaying = true;
+                    updatePlayButton(true);
+                })
+                .catch(function (err) {
+                    console.warn('LFSP: Playback blocked -', err.message);
+                    if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
+                });
+        }
     }
 
     function pause() {
         if (!audio) return;
-
         audio.pause();
         audio.src = '';
         isPlaying = false;
         updatePlayButton(false);
+        if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
     }
 
     function togglePlay() {
@@ -96,12 +100,8 @@
     }
 
     function updatePlayButton(playing) {
-        if (els.iconPlay) {
-            els.iconPlay.style.display = playing ? 'none' : 'block';
-        }
-        if (els.iconPause) {
-            els.iconPause.style.display = playing ? 'block' : 'none';
-        }
+        if (els.iconPlay) els.iconPlay.style.display = playing ? 'none' : 'block';
+        if (els.iconPause) els.iconPause.style.display = playing ? 'block' : 'none';
         if (els.playBtn) {
             els.playBtn.setAttribute('aria-label',
                 playing ? lfspConfig.i18n.pause : lfspConfig.i18n.play
@@ -113,7 +113,6 @@
     function handleVolume() {
         if (!audio || !els.volumeSlider) return;
         audio.volume = els.volumeSlider.value / 100;
-
         if (isMuted && audio.volume > 0) {
             isMuted = false;
             audio.muted = false;
@@ -130,19 +129,13 @@
 
     function updateMuteIcon() {
         var iconEl = els.muteBtn ? els.muteBtn.querySelector('.lfsp-volume-icon') : null;
-        if (iconEl) {
-            iconEl.textContent = isMuted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
-        }
-        if (els.muteBtn) {
-            els.muteBtn.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
-        }
+        if (iconEl) iconEl.textContent = isMuted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
+        if (els.muteBtn) els.muteBtn.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
     }
 
     function togglePlayer() {
         if (!els.wrapper) return;
-
         var isClosed = els.wrapper.classList.contains('lfsp-closed');
-
         if (isClosed) {
             els.wrapper.classList.remove('lfsp-closed');
             savePlayerState('open');
@@ -150,72 +143,53 @@
             els.wrapper.classList.add('lfsp-closed');
             savePlayerState('closed');
         }
-
-        if (els.toggleBtn) {
-            els.toggleBtn.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
-        }
+        if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
     }
 
     function savePlayerState(state) {
-        try {
-            localStorage.setItem('lfsp_player_state', state);
-        } catch (e) {
-            // localStorage nicht verfügbar
-        }
+        try { localStorage.setItem('lfsp_player_state', state); } catch (e) {}
     }
 
     function restorePlayerState() {
         try {
             var saved = localStorage.getItem('lfsp_player_state');
-            if (saved === 'closed') {
+            if (saved === 'closed' || (!saved && lfspConfig.defaultClosed)) {
                 els.wrapper.classList.add('lfsp-closed');
-                if (els.toggleBtn) {
-                    els.toggleBtn.setAttribute('aria-expanded', 'false');
-                }
-            } else if (lfspConfig.defaultClosed) {
-                els.wrapper.classList.add('lfsp-closed');
-                if (els.toggleBtn) {
-                    els.toggleBtn.setAttribute('aria-expanded', 'false');
-                }
+                if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', 'false');
             }
-        } catch (e) {
-            // Ignorieren
-        }
+        } catch (e) {}
     }
 
     function updateClock() {
         if (!els.clock) return;
         var now = new Date();
-        var hh  = String(now.getHours()).padStart(2, '0');
-        var mm  = String(now.getMinutes()).padStart(2, '0');
-        els.clock.textContent = hh + ':' + mm;
+        els.clock.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     }
 
-    /**
-     * Fallback-Titel setzen wenn Song-Daten nicht geladen werden können
-     */
     function setFallbackTitle() {
-        if (els.songTitle && els.songTitle.textContent === lfspConfig.i18n.loading) {
-            els.songTitle.textContent = lfspConfig.stationName + ' – ' + lfspConfig.i18n.liveNow;
+        if (els.songTitle && els.songTitle.textContent.trim() === lfspConfig.i18n.loading) {
+            els.songTitle.textContent = lfspConfig.stationName + ' \u2013 ' + lfspConfig.i18n.liveNow;
         }
     }
 
-    /**
-     * Song-Daten per AJAX laden – mit Fallback bei Fehler
-     */
     function fetchSongData() {
         if (!lfspConfig.ajaxUrl || !lfspConfig.stationName) return;
 
-        var url = new URL(lfspConfig.ajaxUrl);
+        var url;
+        try {
+            url = new URL(lfspConfig.ajaxUrl);
+        } catch (e) {
+            setFallbackTitle();
+            return;
+        }
+
         url.searchParams.set('action', 'lfsp_get_song_data');
         url.searchParams.set('station', lfspConfig.stationName);
         url.searchParams.set('nonce', lfspConfig.nonce);
 
         fetch(url.toString())
             .then(function (res) {
-                if (!res.ok) {
-                    throw new Error('HTTP ' + res.status);
-                }
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.json();
             })
             .then(function (response) {
@@ -223,21 +197,16 @@
                     setFallbackTitle();
                     return;
                 }
-
-                var data = response.data;
+                var data    = response.data;
                 var display = '';
-
                 if (data.type === 'song' && data.artist && data.title) {
-                    display = data.artist + ' – ' + data.title;
+                    display = data.artist + ' \u2013 ' + data.title;
                 } else if (data.title) {
                     display = data.title;
                 } else {
-                    display = lfspConfig.stationName + ' – ' + lfspConfig.i18n.liveNow;
+                    display = lfspConfig.stationName + ' \u2013 ' + lfspConfig.i18n.liveNow;
                 }
-
-                if (els.songTitle) {
-                    els.songTitle.textContent = display;
-                }
+                if (els.songTitle) els.songTitle.textContent = display;
             })
             .catch(function (err) {
                 console.warn('LFSP: Song fetch error -', err.message);
@@ -245,11 +214,9 @@
             });
     }
 
-    /**
-     * Keyboard Support – Space nur wenn Player fokussiert ist
-     */
     function handleKeyboard(e) {
         if (['INPUT', 'TEXTAREA', 'SELECT'].indexOf(e.target.tagName) !== -1) return;
+        if (e.target.isContentEditable) return;
 
         switch (e.key) {
             case ' ':
@@ -260,7 +227,9 @@
                 break;
             case 'm':
             case 'M':
-                toggleMute();
+                if (els.wrapper && els.wrapper.contains(document.activeElement)) {
+                    toggleMute();
+                }
                 break;
         }
     }
@@ -270,5 +239,4 @@
     } else {
         init();
     }
-
 })();

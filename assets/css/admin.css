@@ -9,3 +9,27 @@
     margin-top: 6px;
     font-style: italic;
 }
+/* === BUFFERING STATE === */
+@keyframes lfsp-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lfsp-play-btn.lfsp-buffering {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.lfsp-play-btn.lfsp-buffering .lfsp-icon-play,
+.lfsp-play-btn.lfsp-buffering .lfsp-icon-pause {
+    display: none !important;
+}
+
+.lfsp-play-btn.lfsp-buffering::after {
+    content: "";
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top-color: var(--lfsp-accent-2, #00f0ff);
+    border-radius: 50%;
+    animation: lfsp-spin 0.8s linear infinite;
+}
