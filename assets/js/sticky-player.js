@@ -6,21 +6,15 @@
 (function () {
     'use strict';
 
-    // State
-    let audio      = null;
-    let isPlaying  = false;
-    let isMuted    = false;
-    let songTimer  = null;
-    let clockTimer = null;
+    var audio      = null;
+    var isPlaying  = false;
+    var isMuted    = false;
+    var songTimer  = null;
+    var clockTimer = null;
 
-    // DOM Elements
-    const els = {};
+    var els = {};
 
-    /**
-     * Initialisierung
-     */
     function init() {
-        // DOM-Referenzen cachen
         els.wrapper      = document.getElementById('lfsp-sticky-wrapper');
         els.playBtn      = document.getElementById('lfsp-play-btn');
         els.toggleBtn    = document.getElementById('lfsp-toggle-btn');
@@ -33,12 +27,10 @@
 
         if (!els.wrapper) return;
 
-        // Audio Element erstellen
         audio = new Audio();
         audio.preload = 'none';
         audio.volume  = 0.8;
 
-        // Event Listeners (kein inline onclick!)
         if (els.playBtn) {
             els.playBtn.addEventListener('click', togglePlay);
         }
@@ -55,29 +47,21 @@
             els.muteBtn.addEventListener('click', toggleMute);
         }
 
-        // Gespeicherter Zustand (localStorage für Player-State)
         restorePlayerState();
 
-        // Uhr starten
         updateClock();
         clockTimer = setInterval(updateClock, 1000);
 
-        // Song-Daten laden
         fetchSongData();
         songTimer = setInterval(fetchSongData, lfspConfig.updateInterval || 30000);
 
-        // Autoplay (wird von Browsern blockiert ohne User-Interaktion)
         if (lfspConfig.autoplay) {
             play();
         }
 
-        // Keyboard Support
         document.addEventListener('keydown', handleKeyboard);
     }
 
-    /**
-     * Play
-     */
     function play() {
         if (!audio || !lfspConfig.streamUrl) return;
 
@@ -94,21 +78,15 @@
             });
     }
 
-    /**
-     * Pause
-     */
     function pause() {
         if (!audio) return;
 
         audio.pause();
-        audio.src = ''; // Stream stoppen
+        audio.src = '';
         isPlaying = false;
         updatePlayButton(false);
     }
 
-    /**
-     * Toggle Play/Pause
-     */
     function togglePlay() {
         if (isPlaying) {
             pause();
@@ -117,9 +95,6 @@
         }
     }
 
-    /**
-     * Play-Button UI aktualisieren
-     */
     function updatePlayButton(playing) {
         if (els.iconPlay) {
             els.iconPlay.style.display = playing ? 'none' : 'block';
@@ -135,14 +110,10 @@
         }
     }
 
-    /**
-     * Volume Handler
-     */
     function handleVolume() {
         if (!audio || !els.volumeSlider) return;
         audio.volume = els.volumeSlider.value / 100;
 
-        // Unmute wenn Volume geändert wird
         if (isMuted && audio.volume > 0) {
             isMuted = false;
             audio.muted = false;
@@ -150,9 +121,6 @@
         }
     }
 
-    /**
-     * Toggle Mute
-     */
     function toggleMute() {
         if (!audio) return;
         isMuted = !isMuted;
@@ -160,22 +128,16 @@
         updateMuteIcon();
     }
 
-    /**
-     * Mute-Icon aktualisieren
-     */
     function updateMuteIcon() {
         var iconEl = els.muteBtn ? els.muteBtn.querySelector('.lfsp-volume-icon') : null;
         if (iconEl) {
-            iconEl.textContent = isMuted ? '🔇' : '🔊';
+            iconEl.textContent = isMuted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
         }
         if (els.muteBtn) {
             els.muteBtn.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
         }
     }
 
-    /**
-     * Player Toggle (Auf/Zu)
-     */
     function togglePlayer() {
         if (!els.wrapper) return;
 
@@ -189,26 +151,19 @@
             savePlayerState('closed');
         }
 
-        // ARIA aktualisieren
         if (els.toggleBtn) {
             els.toggleBtn.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
         }
     }
 
-    /**
-     * Player-Zustand speichern
-     */
     function savePlayerState(state) {
         try {
             localStorage.setItem('lfsp_player_state', state);
         } catch (e) {
-            // localStorage nicht verfügbar - ignorieren
+            // localStorage nicht verfügbar
         }
     }
 
-    /**
-     * Player-Zustand wiederherstellen
-     */
     function restorePlayerState() {
         try {
             var saved = localStorage.getItem('lfsp_player_state');
@@ -228,9 +183,6 @@
         }
     }
 
-    /**
-     * Uhr aktualisieren
-     */
     function updateClock() {
         if (!els.clock) return;
         var now = new Date();
@@ -240,7 +192,16 @@
     }
 
     /**
-     * Song-Daten per AJAX laden
+     * Fallback-Titel setzen wenn Song-Daten nicht geladen werden können
+     */
+    function setFallbackTitle() {
+        if (els.songTitle && els.songTitle.textContent === lfspConfig.i18n.loading) {
+            els.songTitle.textContent = lfspConfig.stationName + ' – ' + lfspConfig.i18n.liveNow;
+        }
+    }
+
+    /**
+     * Song-Daten per AJAX laden – mit Fallback bei Fehler
      */
     function fetchSongData() {
         if (!lfspConfig.ajaxUrl || !lfspConfig.stationName) return;
@@ -251,9 +212,17 @@
         url.searchParams.set('nonce', lfspConfig.nonce);
 
         fetch(url.toString())
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                if (!res.ok) {
+                    throw new Error('HTTP ' + res.status);
+                }
+                return res.json();
+            })
             .then(function (response) {
-                if (!response.success || !response.data) return;
+                if (!response.success || !response.data) {
+                    setFallbackTitle();
+                    return;
+                }
 
                 var data = response.data;
                 var display = '';
@@ -272,20 +241,19 @@
             })
             .catch(function (err) {
                 console.warn('LFSP: Song fetch error -', err.message);
+                setFallbackTitle();
             });
     }
 
     /**
-     * Keyboard Support
+     * Keyboard Support – Space nur wenn Player fokussiert ist
      */
     function handleKeyboard(e) {
-        // Nur wenn kein Input fokussiert
         if (['INPUT', 'TEXTAREA', 'SELECT'].indexOf(e.target.tagName) !== -1) return;
 
         switch (e.key) {
             case ' ':
-                // Space: Play/Pause (nur wenn Player sichtbar)
-                if (els.wrapper && !els.wrapper.classList.contains('lfsp-closed')) {
+                if (els.wrapper && els.wrapper.contains(document.activeElement)) {
                     e.preventDefault();
                     togglePlay();
                 }
@@ -297,7 +265,6 @@
         }
     }
 
-    // === INIT ===
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
