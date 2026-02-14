@@ -6,6 +6,7 @@
     var isMuted    = false;
     var songTimer  = null;
     var clockTimer = null;
+    var popupRef   = null;
     var els        = {};
 
     function init() {
@@ -29,26 +30,32 @@
             return;
         }
 
-        audio = new Audio();
-        audio.preload = 'none';
-        audio.volume  = 0.8;
+        if (lfspConfig.inlinePlayback) {
+            audio = new Audio();
+            audio.preload = 'none';
+            audio.volume  = 0.8;
 
-        audio.addEventListener('waiting', function () {
-            if (els.playBtn) els.playBtn.classList.add('lfsp-buffering');
-        });
+            audio.addEventListener('waiting', function () {
+                if (els.playBtn) els.playBtn.classList.add('lfsp-buffering');
+            });
 
-        audio.addEventListener('playing', function () {
-            if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
-            isPlaying = true;
-            updatePlayButton(true);
-        });
+            audio.addEventListener('playing', function () {
+                if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
+                isPlaying = true;
+                updatePlayButton(true);
+            });
 
-        audio.addEventListener('error', function (e) {
-            console.warn('LFSP: Audio error', e);
-            if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
-            isPlaying = false;
-            updatePlayButton(false);
-        });
+            audio.addEventListener('error', function (e) {
+                console.warn('LFSP: Audio error', e);
+                if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
+                isPlaying = false;
+                updatePlayButton(false);
+            });
+        } else {
+            if (els.playBtn) {
+                els.playBtn.setAttribute('aria-label', lfspConfig.i18n.openPopup || lfspConfig.i18n.play);
+            }
+        }
 
         if (els.playBtn) els.playBtn.addEventListener('click', togglePlay);
         if (els.toggleBtn) {
@@ -74,7 +81,28 @@
         document.addEventListener('keydown', handleKeyboard);
     }
 
+    function openPopup() {
+        if (popupRef && !popupRef.closed) {
+            popupRef.focus();
+            return;
+        }
+
+        var w = lfspConfig.popupWidth || 500;
+        var h = lfspConfig.popupHeight || 600;
+        var left = Math.round((screen.width - w) / 2);
+        var top = Math.round((screen.height - h) / 2);
+        var features = 'width=' + w + ',height=' + h + ',left=' + left + ',top=' + top +
+            ',scrollbars=yes,resizable=yes,status=no,toolbar=no,menubar=no,location=no';
+
+        popupRef = window.open(lfspConfig.popupUrl, 'lfsp_popup', features);
+    }
+
     function play() {
+        if (!lfspConfig.inlinePlayback) {
+            openPopup();
+            return;
+        }
+
         if (!audio || !lfspConfig.streamUrl) return;
 
         if (els.playBtn) els.playBtn.classList.add('lfsp-buffering');
@@ -105,6 +133,11 @@
     }
 
     function togglePlay() {
+        if (!lfspConfig.inlinePlayback) {
+            openPopup();
+            return;
+        }
+
         if (isPlaying) {
             pause();
         } else {

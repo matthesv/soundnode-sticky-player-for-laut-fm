@@ -324,6 +324,26 @@
     }
 }
 
+/* === PLAY/PAUSE ICON CENTERING FIX === */
+.lfsp-icon-play,
+.lfsp-icon-pause {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    width: 20px;
+    height: 20px;
+}
+
+.lfsp-icon-play svg,
+.lfsp-icon-pause svg {
+    display: block;
+}
+
+.lfsp-icon-play svg {
+    transform: translateX(1px);
+}
+
 /* === VOLUME === */
 .lfsp-volume-control {
     display: flex;
@@ -502,7 +522,6 @@
         display: none !important;
     }
 
-    /* Left/Right: auf Mobile als Bottom-Bar */
     .lfsp-position-left,
     .lfsp-position-right {
         width: 100%;

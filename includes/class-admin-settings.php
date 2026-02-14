@@ -202,16 +202,24 @@ class LFSP_Admin_Settings {
 
     public function field_inline_playback() {
         $checked = ! empty( $this->get_setting( 'inline_playback' ) ) ? 'checked' : '';
+
+        $allowed_html = array(
+            'strong' => array(),
+            'br'     => array(),
+        );
+
         echo '<label>';
         echo '<input type="checkbox" name="lfsp_settings[inline_playback]" value="1" ' . $checked . '> ';
         echo esc_html__( 'Play the laut.fm stream directly on this website (inline)', 'laut-fm-sticky-player' );
         echo '</label>';
+
         echo '<div style="margin-top: 10px; padding: 12px 16px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 3px;">';
-        echo '<strong>⚠️ Warnung:</strong> Das direkte Abspielen des laut.fm-Streams auf Ihrer Website verstößt gegen <strong>§6 Nr. 9 der laut.fm AGB</strong>. ';
-        echo 'Laut AGB ist nur eine Verlinkung erlaubt, die laut.fm in einem neuen Fenster öffnet. Aktivieren Sie diese Option nur auf eigenes Risiko.<br><br>';
-        echo '<strong>⚠️ Warning:</strong> Embedding the laut.fm audio stream directly on your website violates <strong>§6 No. 9 of the laut.fm Terms of Service</strong>. ';
-        echo 'According to the ToS, only links that open laut.fm in a new window are permitted. Enable this option at your own risk.';
+        echo wp_kses(
+            __( '<strong>⚠️ Warning:</strong> Embedding the laut.fm audio stream directly on your website violates <strong>§6 No. 9 of the laut.fm Terms of Service</strong>. According to the ToS, only links that open laut.fm in a new window are permitted. Enable this option at your own risk.', 'laut-fm-sticky-player' ),
+            $allowed_html
+        );
         echo '</div>';
+
         echo '<p class="description">' . esc_html__( 'When disabled (default), clicking Play opens the laut.fm station page in a popup window.', 'laut-fm-sticky-player' ) . '</p>';
     }
 
