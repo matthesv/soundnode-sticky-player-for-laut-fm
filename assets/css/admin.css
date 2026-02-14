@@ -1,0 +1,11 @@
+/**
+ * Laut.fm Sticky Player - Admin Styles
+ */
+.form-table .lfsp-color-picker {
+    max-width: 100%;
+}
+
+.form-table td p.description {
+    margin-top: 6px;
+    font-style: italic;
+}

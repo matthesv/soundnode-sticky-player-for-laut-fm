@@ -1,0 +1,243 @@
+<?php
+/**
+ * Sticky Player Frontend
+ *
+ * @package LFSP
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class LFSP_Sticky_Player {
+
+    private $settings;
+
+    public function __construct( $settings ) {
+        $this->settings = $settings;
+    }
+
+    public function init() {
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+        add_action( 'wp_footer', array( $this, 'render_player' ) );
+
+        // AJAX-Endpoints
+        add_action( 'wp_ajax_lfsp_get_song_data', array( $this, 'ajax_get_song_data' ) );
+        add_action( 'wp_ajax_nopriv_lfsp_get_song_data', array( $this, 'ajax_get_song_data' ) );
+    }
+
+    /**
+     * Assets laden
+     */
+    public function enqueue_assets() {
+        wp_enqueue_style(
+            'lfsp-sticky-player',
+            LFSP_PLUGIN_URL . 'assets/css/sticky-player.css',
+            array(),
+            LFSP_VERSION
+        );
+
+        wp_enqueue_script(
+            'lfsp-sticky-player',
+            LFSP_PLUGIN_URL . 'assets/js/sticky-player.js',
+            array(),
+            LFSP_VERSION,
+            true
+        );
+
+        $station = sanitize_key( $this->settings['station_name'] );
+
+        wp_localize_script( 'lfsp-sticky-player', 'lfspConfig', array(
+            'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
+            'nonce'        => wp_create_nonce( 'lfsp_nonce' ),
+            'streamUrl'    => LFSP_Lautfm_API::get_stream_url( $station ),
+            'stationName'  => $station,
+            'autoplay'     => ! empty( $this->settings['autoplay'] ),
+            'defaultClosed'=> ! empty( $this->settings['default_closed'] ),
+            'updateInterval'=> 30000,
+            'i18n'         => array(
+                'play'       => esc_html__( 'Play', 'laut-fm-sticky-player' ),
+                'pause'      => esc_html__( 'Pause', 'laut-fm-sticky-player' ),
+                'loading'    => esc_html__( 'Loading...', 'laut-fm-sticky-player' ),
+                'liveNow'    => esc_html__( 'Live', 'laut-fm-sticky-player' ),
+                'toggleOpen' => esc_html__( 'Open Player', 'laut-fm-sticky-player' ),
+                'toggleClose'=> esc_html__( 'Close Player', 'laut-fm-sticky-player' ),
+            ),
+        ) );
+    }
+
+    /**
+     * Custom CSS-Variablen injizieren
+     */
+    private function get_custom_css() {
+        return sprintf(
+            ':root {
+                --lfsp-accent-1: %s;
+                --lfsp-accent-2: %s;
+                --lfsp-bg: %s;
+                --lfsp-panel: %s;
+                --lfsp-text: %s;
+                --lfsp-height: %dpx;
+            }',
+            esc_attr( $this->settings['color_accent_1'] ?? '#ff003c' ),
+            esc_attr( $this->settings['color_accent_2'] ?? '#00f0ff' ),
+            esc_attr( $this->settings['color_bg'] ?? '#050505' ),
+            esc_attr( $this->settings['color_bg'] ?? '#101010' ),
+            esc_attr( $this->settings['color_text'] ?? '#ffffff' ),
+            absint( $this->settings['player_height'] ?? 90 )
+        );
+    }
+
+    /**
+     * Player HTML rendern
+     */
+    public function render_player() {
+        $station       = sanitize_key( $this->settings['station_name'] );
+        $slogan        = sanitize_text_field( $this->settings['station_slogan'] ?? '' );
+        $position      = sanitize_text_field( $this->settings['player_position'] ?? 'bottom' );
+        $show_clock    = ! empty( $this->settings['show_clock'] );
+        $show_toggle   = ! empty( $this->settings['show_toggle'] );
+        $show_mobile   = ! empty( $this->settings['show_on_mobile'] );
+        $show_soundnode = ! empty( $this->settings['show_soundnode'] );
+        $stream_label  = sanitize_text_field( $this->settings['stream_link_label'] ?? 'STREAM' );
+
+        // Custom CSS Variablen
+        wp_add_inline_style( 'lfsp-sticky-player', $this->get_custom_css() );
+
+        $mobile_class  = $show_mobile ? '' : ' lfsp-hide-mobile';
+        $wrapper_class = ! empty( $this->settings['default_closed'] ) ? ' lfsp-closed' : '';
+        ?>
+
+        <div id="lfsp-sticky-wrapper"
+             class="lfsp-wrapper lfsp-position-<?php echo esc_attr( $position ); ?><?php echo esc_attr( $mobile_class . $wrapper_class ); ?>"
+             role="region"
+             aria-label="<?php esc_attr_e( 'Radio Player', 'laut-fm-sticky-player' ); ?>"
+             data-station="<?php echo esc_attr( $station ); ?>">
+
+            <?php if ( $show_toggle ) : ?>
+            <!-- Toggle Button -->
+            <button id="lfsp-toggle-btn"
+                    class="lfsp-toggle-btn"
+                    type="button"
+                    aria-label="<?php esc_attr_e( 'Toggle Player', 'laut-fm-sticky-player' ); ?>"
+                    aria-expanded="true">
+                <span class="lfsp-toggle-icon" aria-hidden="true">▼</span>
+            </button>
+            <?php endif; ?>
+
+            <!-- Player Body -->
+            <div class="lfsp-player-body">
+                <div class="lfsp-inner-wrapper">
+
+                    <!-- Links: Play Button + Volume -->
+                    <div class="lfsp-left-area">
+                        <button id="lfsp-play-btn"
+                                class="lfsp-play-btn"
+                                type="button"
+                                aria-label="<?php esc_attr_e( 'Play', 'laut-fm-sticky-player' ); ?>">
+                            <span class="lfsp-icon-play" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <polygon points="6,3 20,12 6,21" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <span class="lfsp-icon-pause" aria-hidden="true" style="display:none;">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <rect x="5" y="3" width="4" height="18" fill="currentColor"/>
+                                    <rect x="15" y="3" width="4" height="18" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </button>
+
+                        <!-- Volume (Desktop only) -->
+                        <div class="lfsp-volume-control">
+                            <button id="lfsp-mute-btn"
+                                    class="lfsp-mute-btn"
+                                    type="button"
+                                    aria-label="<?php esc_attr_e( 'Mute', 'laut-fm-sticky-player' ); ?>">
+                                <span class="lfsp-volume-icon" aria-hidden="true">🔊</span>
+                            </button>
+                            <input type="range"
+                                   id="lfsp-volume-slider"
+                                   class="lfsp-volume-slider"
+                                   min="0" max="100" value="80"
+                                   aria-label="<?php esc_attr_e( 'Volume', 'laut-fm-sticky-player' ); ?>">
+                        </div>
+                    </div>
+
+                    <!-- Mitte: Song-Info -->
+                    <div class="lfsp-song-info">
+                        <div id="lfsp-song-title" class="lfsp-title">
+                            <?php esc_html_e( 'Loading...', 'laut-fm-sticky-player' ); ?>
+                        </div>
+                        <?php if ( ! empty( $slogan ) ) : ?>
+                        <div class="lfsp-subtitle">
+                            <?php echo esc_html( $slogan ); ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Rechts: Uhr, Links -->
+                    <div class="lfsp-meta">
+                        <?php if ( $show_clock ) : ?>
+                        <div id="lfsp-clock" class="lfsp-time">--:--</div>
+                        <?php endif; ?>
+
+                        <a href="<?php echo esc_url( LFSP_Lautfm_API::get_stream_url( $station ) ); ?>"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="lfsp-link lfsp-stream-link">
+                            <?php echo esc_html( $stream_label ); ?>
+                        </a>
+
+                        <?php if ( $show_soundnode ) : ?>
+                        <a href="<?php echo esc_url( LFSP_Lautfm_API::get_soundnode_url( $station ) ); ?>"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="lfsp-link lfsp-soundnode-link"
+                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', 'laut-fm-sticky-player' ); ?>">
+                            soundnode.de
+                        </a>
+                        <?php endif; ?>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * AJAX: Song-Daten abrufen
+     */
+    public function ajax_get_song_data() {
+        check_ajax_referer( 'lfsp_nonce', 'nonce' );
+
+        $station = isset( $_GET['station'] )
+            ? sanitize_key( wp_unslash( $_GET['station'] ) )
+            : '';
+
+        if ( empty( $station ) ) {
+            wp_send_json_error( array( 'message' => 'No station specified.' ) );
+        }
+
+        $songs = LFSP_Lautfm_API::get_last_songs( $station );
+
+        if ( false === $songs || empty( $songs ) ) {
+            wp_send_json_error( array( 'message' => 'Could not fetch song data.' ) );
+        }
+
+        $track = $songs[0];
+        $result = array(
+            'type'   => sanitize_text_field( $track['type'] ?? '' ),
+            'artist' => '',
+            'title'  => '',
+        );
+
+        if ( 'song' === $result['type'] ) {
+            $result['artist'] = sanitize_text_field( $track['artist']['name'] ?? '' );
+            $result['title']  = sanitize_text_field( $track['title'] ?? '' );
+        }
+
+        wp_send_json_success( $result );
+    }
+}
