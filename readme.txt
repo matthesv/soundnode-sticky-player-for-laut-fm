@@ -1,10 +1,10 @@
 === Laut.fm Sticky Player ===
 Contributors: matthesv
-Tags: laut.fm, radio, audio, stream, player, sticky, music, webradio
+Tags: laut.fm, radio, stream, player, webradio
 Requires at least: 5.8
-Tested up to: 6.9.1
+Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.2.1
+Stable tag: 1.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,12 @@ Yes, as long as a station is configured. If no station is set, only admins see a
 5. Settings page: feature toggles (clock, mobile, collapse)
 
 == Changelog ==
+
+= 1.2.3 =
+Maintenance update recommended for best compatibility with current WordPress versions.
+
+= 1.2.2 =
+Maintenance update recommended for best compatibility with current WordPress versions.
 
 = 1.2.1 =
 * Maintenance release: improved WordPress.org compatibility and code quality
