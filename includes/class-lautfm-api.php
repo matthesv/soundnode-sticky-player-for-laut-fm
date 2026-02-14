@@ -88,11 +88,15 @@ class LFSP_Lautfm_API {
             'headers' => array( 'Accept' => 'application/json' ),
         ) );
 
-        if ( is_wp_error( $response ) || ! is_array( json_decode( wp_remote_retrieve_body( $response ), true ) ) ) {
+        if ( is_wp_error( $response ) ) {
             return false;
         }
 
         $data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( ! is_array( $data ) ) {
+            return false;
+        }
 
         set_transient( $cache_key, $data, 20 );
         return $data;

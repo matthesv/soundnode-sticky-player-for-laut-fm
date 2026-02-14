@@ -192,10 +192,8 @@ class LFSP_Sticky_Player {
             wp_send_json_error( array( 'message' => 'No station specified.' ) );
         }
 
-        // Primär: current_song (einzelnes Objekt)
         $song = LFSP_Lautfm_API::get_current_song( $station );
 
-        // Fallback: last_songs (Array, erstes Element nehmen)
         if ( false === $song || empty( $song ) ) {
             $songs = LFSP_Lautfm_API::get_last_songs( $station );
             if ( false === $songs || empty( $songs ) ) {

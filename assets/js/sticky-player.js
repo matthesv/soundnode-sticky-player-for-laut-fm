@@ -9,7 +9,10 @@
     var els        = {};
 
     function init() {
-        if (typeof lfspConfig === 'undefined') return;
+        if (typeof lfspConfig === 'undefined') {
+            console.error('LFSP: lfspConfig not found. wp_localize_script may have failed.');
+            return;
+        }
 
         els.wrapper      = document.getElementById('lfsp-sticky-wrapper');
         els.playBtn      = document.getElementById('lfsp-play-btn');
@@ -21,7 +24,12 @@
         els.iconPlay     = els.playBtn ? els.playBtn.querySelector('.lfsp-icon-play') : null;
         els.iconPause    = els.playBtn ? els.playBtn.querySelector('.lfsp-icon-pause') : null;
 
-        if (!els.wrapper) return;
+        if (!els.wrapper) {
+            console.error('LFSP: #lfsp-sticky-wrapper not found. render_player() may not have run.');
+            return;
+        }
+
+        console.info('LFSP: Player initialized for station "' + lfspConfig.stationName + '"');
 
         audio = new Audio();
         audio.preload = 'none';
@@ -37,7 +45,8 @@
             updatePlayButton(true);
         });
 
-        audio.addEventListener('error', function () {
+        audio.addEventListener('error', function (e) {
+            console.warn('LFSP: Audio error', e);
             if (els.playBtn) els.playBtn.classList.remove('lfsp-buffering');
             isPlaying = false;
             updatePlayButton(false);
@@ -54,7 +63,7 @@
         clockTimer = setInterval(updateClock, 1000);
 
         fetchSongData();
-        songTimer = setInterval(fetchSongData, lfspConfig.updateInterval || 30000);
+        songTimer = setInterval(fetchSongData, parseInt(lfspConfig.updateInterval, 10) || 30000);
 
         if (lfspConfig.autoplay) play();
 
@@ -179,6 +188,7 @@
         try {
             url = new URL(lfspConfig.ajaxUrl);
         } catch (e) {
+            console.warn('LFSP: Invalid ajaxUrl', lfspConfig.ajaxUrl);
             setFallbackTitle();
             return;
         }

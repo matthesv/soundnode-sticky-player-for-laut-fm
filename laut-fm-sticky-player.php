@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Laut.fm Sticky Player
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
- * Description:       A customizable sticky audio player for any laut.fm radio station. Stream live radio directly on your WordPress site.
- * Version:           1.0.4
+ * Description:       A customizable sticky audio player for any laut.fm radio station.
+ * Version:           1.0.5
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,20 +18,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'LFSP_VERSION', '1.0.4' );
+define( 'LFSP_VERSION', '1.0.5' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
 
-// ============================================
-// AUTO-UPDATE VON GITHUB (abgesichert)
-// ============================================
 $lfsp_puc_file = LFSP_PLUGIN_PATH . 'includes/plugin-update-checker/plugin-update-checker.php';
 
 if ( file_exists( $lfsp_puc_file ) ) {
     require_once $lfsp_puc_file;
 
-    // Vollqualifizierten Klassennamen nutzen statt "use"
     if ( class_exists( '\YahnisElsts\PluginUpdateChecker\v5\PucFactory' ) ) {
         $lfsp_update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
             'https://github.com/matthesv/laut-fm-sticky-player/',
@@ -42,8 +38,6 @@ if ( file_exists( $lfsp_puc_file ) ) {
     }
 }
 
-
-// Aktivierung
 register_activation_hook( __FILE__, 'lfsp_activate' );
 function lfsp_activate() {
     $defaults = array(
@@ -67,7 +61,6 @@ function lfsp_activate() {
     add_option( 'lfsp_version', LFSP_VERSION );
 }
 
-// Deaktivierung
 register_deactivation_hook( __FILE__, 'lfsp_deactivate' );
 function lfsp_deactivate() {
     global $wpdb;
@@ -80,12 +73,10 @@ function lfsp_deactivate() {
     );
 }
 
-// Klassen laden
 require_once LFSP_PLUGIN_PATH . 'includes/class-lautfm-api.php';
 require_once LFSP_PLUGIN_PATH . 'includes/class-sticky-player.php';
 require_once LFSP_PLUGIN_PATH . 'includes/class-admin-settings.php';
 
-// Initialisierung
 function lfsp_init() {
     load_plugin_textdomain(
         'laut-fm-sticky-player',
@@ -94,17 +85,17 @@ function lfsp_init() {
     );
 
     $settings = get_option( 'lfsp_settings', array() );
+    $station  = $settings['station_name'] ?? '';
 
-    if ( ! empty( $settings['station_name'] ) ) {
+    if ( ! empty( $station ) ) {
         $player = new LFSP_Sticky_Player( $settings );
-
-        // AJAX-Handler IMMER registrieren (admin-ajax.php läuft im Admin-Kontext)
         $player->register_ajax();
 
-        // Frontend-Assets und HTML nur außerhalb des Admins
         if ( ! is_admin() ) {
             $player->init_frontend();
         }
+    } elseif ( ! is_admin() && current_user_can( 'manage_options' ) ) {
+        add_action( 'wp_footer', 'lfsp_render_admin_notice' );
     }
 
     if ( is_admin() ) {
@@ -113,7 +104,14 @@ function lfsp_init() {
 }
 add_action( 'plugins_loaded', 'lfsp_init' );
 
-// Settings-Link in Plugin-Liste
+function lfsp_render_admin_notice() {
+    $url = esc_url( admin_url( 'options-general.php?page=laut-fm-sticky-player' ) );
+    echo '<!-- LFSP: No station configured. Visit ' . $url . ' -->';
+    echo '<div style="position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:12px 20px;z-index:999999;font-family:sans-serif;font-size:14px;text-align:center;">';
+    echo 'Laut.fm Sticky Player: <a href="' . $url . '" style="color:#00f0ff;text-decoration:underline;">Bitte zuerst einen Stationsnamen eingeben &rarr;</a>';
+    echo '</div>';
+}
+
 function lfsp_plugin_action_links( $links ) {
     $settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=laut-fm-sticky-player' ) ) . '">'
         . esc_html__( 'Settings', 'laut-fm-sticky-player' ) . '</a>';
