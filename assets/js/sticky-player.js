@@ -10,7 +10,7 @@
 
     function init() {
         if (typeof lfspConfig === 'undefined') {
-            console.error('LFSP: lfspConfig not found. wp_localize_script may have failed.');
+            console.error('LFSP: lfspConfig not found.');
             return;
         }
 
@@ -25,11 +25,9 @@
         els.iconPause    = els.playBtn ? els.playBtn.querySelector('.lfsp-icon-pause') : null;
 
         if (!els.wrapper) {
-            console.error('LFSP: #lfsp-sticky-wrapper not found. render_player() may not have run.');
+            console.error('LFSP: #lfsp-sticky-wrapper not found.');
             return;
         }
-
-        console.info('LFSP: Player initialized for station "' + lfspConfig.stationName + '"');
 
         audio = new Audio();
         audio.preload = 'none';
@@ -53,7 +51,13 @@
         });
 
         if (els.playBtn) els.playBtn.addEventListener('click', togglePlay);
-        if (els.toggleBtn) els.toggleBtn.addEventListener('click', togglePlayer);
+        if (els.toggleBtn) {
+            els.toggleBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                togglePlayer();
+            });
+        }
         if (els.volumeSlider) els.volumeSlider.addEventListener('input', handleVolume);
         if (els.muteBtn) els.muteBtn.addEventListener('click', toggleMute);
 
@@ -144,15 +148,18 @@
 
     function togglePlayer() {
         if (!els.wrapper) return;
+
         var isClosed = els.wrapper.classList.contains('lfsp-closed');
+
         if (isClosed) {
             els.wrapper.classList.remove('lfsp-closed');
+            if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', 'true');
             savePlayerState('open');
         } else {
             els.wrapper.classList.add('lfsp-closed');
+            if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', 'false');
             savePlayerState('closed');
         }
-        if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', isClosed ? 'true' : 'false');
     }
 
     function savePlayerState(state) {
@@ -165,6 +172,9 @@
             if (saved === 'closed' || (!saved && lfspConfig.defaultClosed)) {
                 els.wrapper.classList.add('lfsp-closed');
                 if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', 'false');
+            } else {
+                els.wrapper.classList.remove('lfsp-closed');
+                if (els.toggleBtn) els.toggleBtn.setAttribute('aria-expanded', 'true');
             }
         } catch (e) {}
     }

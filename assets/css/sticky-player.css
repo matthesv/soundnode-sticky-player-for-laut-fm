@@ -1,8 +1,5 @@
 /**
  * Laut.fm Sticky Player - Frontend Styles
- *
- * CSS Custom Properties from PHP:
- * --lfsp-accent-1, --lfsp-accent-2, --lfsp-bg, --lfsp-panel, --lfsp-text, --lfsp-height
  */
 
 /* === WRAPPER === */
@@ -14,6 +11,7 @@
     font-family: 'Montserrat', 'Roboto', 'Arial', sans-serif;
     transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform: translateY(0);
+    overflow: visible;
 }
 
 .lfsp-position-bottom {
@@ -25,11 +23,11 @@
 }
 
 .lfsp-position-bottom.lfsp-closed {
-    transform: translateY(100%);
+    transform: translateY(var(--lfsp-height, 90px));
 }
 
 .lfsp-position-top.lfsp-closed {
-    transform: translateY(-100%);
+    transform: translateY(calc(-1 * var(--lfsp-height, 90px)));
 }
 
 /* === PLAYER BODY === */
@@ -91,6 +89,7 @@
     box-shadow: 0 -5px 15px rgba(0, 240, 255, 0.2);
     z-index: 1000000;
     padding: 0;
+    pointer-events: auto;
 }
 
 .lfsp-position-top .lfsp-toggle-btn {
@@ -109,12 +108,10 @@
     line-height: 1;
 }
 
-/* Bottom: ▾ zeigt nach unten (offen), rotiert nach oben (geschlossen) */
 .lfsp-position-bottom.lfsp-closed .lfsp-toggle-icon {
     transform: rotate(180deg);
 }
 
-/* Top: ▾ muss initial rotiert sein (nach oben zeigen), und bei closed zurückdrehen */
 .lfsp-position-top .lfsp-toggle-icon {
     transform: rotate(180deg);
 }
@@ -383,6 +380,7 @@
         display: none;
     }
 }
+
 /* === BUFFERING STATE === */
 @keyframes lfsp-spin {
     to { transform: rotate(360deg); }

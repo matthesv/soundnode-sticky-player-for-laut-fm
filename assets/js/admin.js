@@ -1,11 +1,11 @@
 /**
- * Laut.fm Sticky Player - Admin JavaScript
+ * Laut.fm Sticky Player - Admin Styles
  */
-(function ($) {
-    'use strict';
+.form-table .lfsp-color-picker {
+    max-width: 100%;
+}
 
-    $(document).ready(function () {
-        // Color Picker initialisieren
-        $('.lfsp-color-picker').wpColorPicker();
-    });
-})(jQuery);
+.form-table td p.description {
+    margin-top: 6px;
+    font-style: italic;
+}
