@@ -40,8 +40,8 @@ class LFSP_Admin_Settings {
 
     public function add_menu() {
         add_options_page(
-            __( 'Laut.fm Sticky Player', 'laut-fm-sticky-player' ),
-            __( 'Laut.fm Sticky Player', 'laut-fm-sticky-player' ),
+            __( 'SoundNode Sticky Player for laut.fm', 'laut-fm-sticky-player' ),
+            __( 'SoundNode Sticky Player for laut.fm', 'laut-fm-sticky-player' ),
             'manage_options',
             'laut-fm-sticky-player',
             array( $this, 'render_page' )
