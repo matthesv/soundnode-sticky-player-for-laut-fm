@@ -198,7 +198,7 @@ class LFSP_Sticky_Player {
                            target="_blank"
                            rel="noopener noreferrer"
                            class="lfsp-link lfsp-soundnode-link"
-                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', 'laut-fm-sticky-player' ); ?>">
+                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', 'soundnode-sticky-player-for-laut-fm' ); ?>">
                             soundnode.de
                         </a>
                         <?php endif; ?>

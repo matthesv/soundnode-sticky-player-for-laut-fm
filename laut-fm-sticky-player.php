@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:       Laut.fm Sticky Player
+ * Plugin Name:       SoundNode Sticky Player for laut.fm
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station.
  * Version:           1.2.3
@@ -10,7 +10,7 @@
  * Author URI:        https://soundnode.de
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       laut-fm-sticky-player
+ * Text Domain:       soundnode-sticky-player-for-laut-fm
  * Domain Path:       /languages
  */
 

@@ -12,7 +12,7 @@ A customizable sticky audio player for any laut.fm radio station. Stream live ra
 
 == Description ==
 
-**Laut.fm Sticky Player** adds a modern, customizable audio player that stays visible (“sticky”) while users scroll your site. It’s built for **laut.fm** stations and designed to be simple to set up while still giving you plenty of visual control.
+**SoundNode Sticky Player for laut.fm** adds a modern, customizable audio player that stays visible (“sticky”) while users scroll your site. It’s built for **laut.fm** stations and designed to be simple to set up while still giving you plenty of visual control.
 
 **Perfect for:**
 * Radio stations on laut.fm
@@ -36,8 +36,8 @@ This plugin does not create user accounts and does not track users. It only load
 == Installation ==
 
 1. Upload the plugin folder to `/wp-content/plugins/` or install it via *Plugins → Add New*.
-2. Activate **Laut.fm Sticky Player**.
-3. Go to *Settings → Laut.fm Sticky Player*.
+2. Activate **SoundNode Sticky Player for laut.fm**.
+3. Go to *Settings → SoundNode Sticky Player for laut.fm*.
 4. Enter your **Station Name** (laut.fm station slug, e.g. `youfm`).
 5. Customize design and playback options.
 6. Visit your site frontend — the player will appear once a station is configured.

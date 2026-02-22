@@ -1,6 +1,6 @@
 <?php
 /**
- * Uninstall cleanup for Laut.fm Sticky Player.
+ * Uninstall cleanup for SoundNode Sticky Player for laut.fm.
  *
  * @package LFSP
  */
