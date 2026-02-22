@@ -3,7 +3,7 @@
  * Plugin Name:       SoundNode Sticky Player for laut.fm
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station.
- * Version:           1.2.3
+ * Version:           1.3.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'LFSP_VERSION', '1.2.3' );
+define( 'LFSP_VERSION', '1.3.0' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
@@ -99,16 +99,17 @@ function lfsp_maybe_migrate_settings() {
 }
 
 function lfsp_render_admin_notice() {
-    $url = admin_url( 'options-general.php?page=laut-fm-sticky-player' );
+    $url = admin_url( 'options-general.php?page=soundnode-sticky-player' );
 
     echo '<div style="position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#fff;padding:12px 20px;z-index:999999;font-family:sans-serif;font-size:14px;text-align:center;">';
-    echo 'Laut.fm Sticky Player: <a href="' . esc_url( $url ) . '" style="color:#00f0ff;text-decoration:underline;">' . esc_html__( 'Bitte zuerst einen Stationsnamen eingeben →', 'laut-fm-sticky-player' ) . '</a>';
-    echo '</div>';
+    echo 'SoundNode Sticky Player: <a href="' . esc_url( $url ) . '" style="color:#00f0ff;text-decoration:underline;">';
+    echo esc_html__( 'Please enter a station name first', 'soundnode-sticky-player-for-laut-fm' );
+    echo ' &rarr;</a></div>';
 }
 
 function lfsp_plugin_action_links( $links ) {
-    $settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=laut-fm-sticky-player' ) ) . '">'
-        . esc_html__( 'Settings', 'laut-fm-sticky-player' ) . '</a>';
+    $settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=soundnode-sticky-player' ) ) . '">'
+        . esc_html__( 'Settings', 'soundnode-sticky-player-for-laut-fm' ) . '</a>';
     array_unshift( $links, $settings_link );
     return $links;
 }

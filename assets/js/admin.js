@@ -1,5 +1,5 @@
 /**
- * Laut.fm Sticky Player - Admin JavaScript
+ * SoundNode Sticky Player for laut.fm - Admin JavaScript
  */
 (function ($) {
     'use strict';

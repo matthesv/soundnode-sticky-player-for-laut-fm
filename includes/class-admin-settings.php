@@ -1,15 +1,17 @@
 <?php
-/**
- * Admin Settings
- *
- * @package LFSP
- */
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 class LFSP_Admin_Settings {
+
+    private const PAGE_SLUG       = 'soundnode-sticky-player';
+    private const TEXT_DOMAIN     = 'soundnode-sticky-player-for-laut-fm';
+    private const OPTION_GROUP    = 'lfsp_options_group';
+    private const OPTION_NAME     = 'lfsp_settings';
+
+    private const ALLOWED_POSITIONS = array( 'bottom', 'top', 'left', 'right' );
+    private const ALLOWED_PLAYBACK  = array( 'popup_website', 'popup_stream', 'inline' );
 
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_menu' ) );
@@ -18,7 +20,7 @@ class LFSP_Admin_Settings {
     }
 
     public function enqueue_admin_assets( $hook ) {
-        if ( 'settings_page_laut-fm-sticky-player' !== $hook ) {
+        if ( 'settings_page_' . self::PAGE_SLUG !== $hook ) {
             return;
         }
         wp_enqueue_style( 'wp-color-picker' );
@@ -40,87 +42,102 @@ class LFSP_Admin_Settings {
 
     public function add_menu() {
         add_options_page(
-            __( 'SoundNode Sticky Player for laut.fm', 'laut-fm-sticky-player' ),
-            __( 'SoundNode Sticky Player for laut.fm', 'laut-fm-sticky-player' ),
+            __( 'SoundNode Sticky Player', self::TEXT_DOMAIN ),
+            __( 'SoundNode Sticky Player', self::TEXT_DOMAIN ),
             'manage_options',
-            'laut-fm-sticky-player',
+            self::PAGE_SLUG,
             array( $this, 'render_page' )
         );
     }
 
     public function register_settings() {
-        register_setting( 'lfsp_options_group', 'lfsp_settings', array( $this, 'sanitize_settings' ) );
+        register_setting( self::OPTION_GROUP, self::OPTION_NAME, array( $this, 'sanitize_settings' ) );
 
+        $this->register_section_station();
+        $this->register_section_design();
+        $this->register_section_features();
+        $this->register_section_soundnode();
+        $this->register_section_playback();
+    }
+
+    private function register_section_station() {
         add_settings_section(
             'lfsp_section_station',
-            __( 'Station', 'laut-fm-sticky-player' ),
+            __( 'Station', self::TEXT_DOMAIN ),
             function () {
-                echo '<p>' . esc_html__( 'Configure the laut.fm station and optional custom stream URL.', 'laut-fm-sticky-player' ) . '</p>';
+                echo '<p>' . esc_html__( 'Configure the laut.fm station and optional custom stream URL.', self::TEXT_DOMAIN ) . '</p>';
             },
-            'laut-fm-sticky-player'
+            self::PAGE_SLUG
         );
 
-        $this->add_field( 'station_name', __( 'Station Name', 'laut-fm-sticky-player' ), 'field_station_name', 'lfsp_section_station' );
-        $this->add_field( 'station_slogan', __( 'Station Slogan', 'laut-fm-sticky-player' ), 'field_station_slogan', 'lfsp_section_station' );
-        $this->add_field( 'custom_stream_url', __( 'Custom Stream URL (Optional)', 'laut-fm-sticky-player' ), 'field_custom_stream_url', 'lfsp_section_station' );
+        $this->add_field( 'station_name', __( 'Station Name', self::TEXT_DOMAIN ), 'field_station_name', 'lfsp_section_station' );
+        $this->add_field( 'station_slogan', __( 'Station Slogan', self::TEXT_DOMAIN ), 'field_station_slogan', 'lfsp_section_station' );
+        $this->add_field( 'custom_stream_url', __( 'Custom Stream URL (Optional)', self::TEXT_DOMAIN ), 'field_custom_stream_url', 'lfsp_section_station' );
+    }
 
+    private function register_section_design() {
         add_settings_section(
             'lfsp_section_design',
-            __( 'Design', 'laut-fm-sticky-player' ),
+            __( 'Design', self::TEXT_DOMAIN ),
             function () {
-                echo '<p>' . esc_html__( 'Customize colors and layout.', 'laut-fm-sticky-player' ) . '</p>';
+                echo '<p>' . esc_html__( 'Customize colors and layout.', self::TEXT_DOMAIN ) . '</p>';
             },
-            'laut-fm-sticky-player'
+            self::PAGE_SLUG
         );
 
-        $this->add_field( 'player_position', __( 'Player Position', 'laut-fm-sticky-player' ), 'field_player_position', 'lfsp_section_design' );
-        $this->add_field( 'player_height', __( 'Player Height (px)', 'laut-fm-sticky-player' ), 'field_player_height', 'lfsp_section_design' );
-        $this->add_field( 'color_accent_1', __( 'Accent Color 1', 'laut-fm-sticky-player' ), 'field_color_accent_1', 'lfsp_section_design' );
-        $this->add_field( 'color_accent_2', __( 'Accent Color 2', 'laut-fm-sticky-player' ), 'field_color_accent_2', 'lfsp_section_design' );
-        $this->add_field( 'color_bg', __( 'Background Color', 'laut-fm-sticky-player' ), 'field_color_bg', 'lfsp_section_design' );
-        $this->add_field( 'color_text', __( 'Text Color', 'laut-fm-sticky-player' ), 'field_color_text', 'lfsp_section_design' );
+        $this->add_field( 'player_position', __( 'Player Position', self::TEXT_DOMAIN ), 'field_player_position', 'lfsp_section_design' );
+        $this->add_field( 'player_height', __( 'Player Height (px)', self::TEXT_DOMAIN ), 'field_player_height', 'lfsp_section_design' );
+        $this->add_field( 'color_accent_1', __( 'Accent Color 1', self::TEXT_DOMAIN ), 'field_color_accent_1', 'lfsp_section_design' );
+        $this->add_field( 'color_accent_2', __( 'Accent Color 2', self::TEXT_DOMAIN ), 'field_color_accent_2', 'lfsp_section_design' );
+        $this->add_field( 'color_bg', __( 'Background Color', self::TEXT_DOMAIN ), 'field_color_bg', 'lfsp_section_design' );
+        $this->add_field( 'color_text', __( 'Text Color', self::TEXT_DOMAIN ), 'field_color_text', 'lfsp_section_design' );
+    }
 
+    private function register_section_features() {
         add_settings_section(
             'lfsp_section_features',
-            __( 'Features', 'laut-fm-sticky-player' ),
+            __( 'Features', self::TEXT_DOMAIN ),
             function () {
-                echo '<p>' . esc_html__( 'Toggle player features.', 'laut-fm-sticky-player' ) . '</p>';
+                echo '<p>' . esc_html__( 'Toggle player features.', self::TEXT_DOMAIN ) . '</p>';
             },
-            'laut-fm-sticky-player'
+            self::PAGE_SLUG
         );
 
-        $this->add_field( 'autoplay', __( 'Autoplay', 'laut-fm-sticky-player' ), 'field_autoplay', 'lfsp_section_features' );
-        $this->add_field( 'show_clock', __( 'Show Clock', 'laut-fm-sticky-player' ), 'field_show_clock', 'lfsp_section_features' );
-        $this->add_field( 'show_toggle', __( 'Show Toggle Button', 'laut-fm-sticky-player' ), 'field_show_toggle', 'lfsp_section_features' );
-        $this->add_field( 'show_on_mobile', __( 'Show on Mobile', 'laut-fm-sticky-player' ), 'field_show_mobile', 'lfsp_section_features' );
-        $this->add_field( 'default_closed', __( 'Start Closed', 'laut-fm-sticky-player' ), 'field_default_closed', 'lfsp_section_features' );
-        $this->add_field( 'stream_link_label', __( 'Stream Link Label', 'laut-fm-sticky-player' ), 'field_stream_label', 'lfsp_section_features' );
+        $this->add_field( 'autoplay', __( 'Autoplay', self::TEXT_DOMAIN ), 'field_autoplay', 'lfsp_section_features' );
+        $this->add_field( 'show_clock', __( 'Show Clock', self::TEXT_DOMAIN ), 'field_show_clock', 'lfsp_section_features' );
+        $this->add_field( 'show_toggle', __( 'Show Toggle Button', self::TEXT_DOMAIN ), 'field_show_toggle', 'lfsp_section_features' );
+        $this->add_field( 'show_on_mobile', __( 'Show on Mobile', self::TEXT_DOMAIN ), 'field_show_mobile', 'lfsp_section_features' );
+        $this->add_field( 'default_closed', __( 'Start Closed', self::TEXT_DOMAIN ), 'field_default_closed', 'lfsp_section_features' );
+        $this->add_field( 'stream_link_label', __( 'Stream Link Label', self::TEXT_DOMAIN ), 'field_stream_label', 'lfsp_section_features' );
+    }
 
+    private function register_section_soundnode() {
         add_settings_section(
             'lfsp_section_soundnode',
-            __( '🅢 soundnode.de Integration', 'laut-fm-sticky-player' ),
+            __( '🅢 soundnode.de Integration', self::TEXT_DOMAIN ),
             function () {
                 echo '<p>' . sprintf(
-                    /* translators: %s: Link to soundnode.de */
-                    esc_html__( 'Show a link to %s – a radio aggregator listing all laut.fm stations.', 'laut-fm-sticky-player' ),
+                    esc_html__( 'Show a link to %s — a radio aggregator listing all laut.fm stations.', self::TEXT_DOMAIN ),
                     '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
                 ) . '</p>';
             },
-            'laut-fm-sticky-player'
+            self::PAGE_SLUG
         );
 
-        $this->add_field( 'show_soundnode', __( 'Show soundnode.de Link', 'laut-fm-sticky-player' ), 'field_show_soundnode', 'lfsp_section_soundnode' );
+        $this->add_field( 'show_soundnode', __( 'Show soundnode.de Link', self::TEXT_DOMAIN ), 'field_show_soundnode', 'lfsp_section_soundnode' );
+    }
 
+    private function register_section_playback() {
         add_settings_section(
             'lfsp_section_playback',
-            __( 'Playback', 'laut-fm-sticky-player' ),
+            __( 'Playback', self::TEXT_DOMAIN ),
             function () {
-                echo '<p>' . esc_html__( 'Choose how playback should work (inline, popup, etc.).', 'laut-fm-sticky-player' ) . '</p>';
+                echo '<p>' . esc_html__( 'Choose how playback should work (inline, popup, etc.).', self::TEXT_DOMAIN ) . '</p>';
             },
-            'laut-fm-sticky-player'
+            self::PAGE_SLUG
         );
 
-        $this->add_field( 'playback_mode', __( 'Playback Mode', 'laut-fm-sticky-player' ), 'field_playback_mode', 'lfsp_section_playback' );
+        $this->add_field( 'playback_mode', __( 'Playback Mode', self::TEXT_DOMAIN ), 'field_playback_mode', 'lfsp_section_playback' );
     }
 
     private function add_field( $key, $label, $callback, $section ) {
@@ -128,7 +145,7 @@ class LFSP_Admin_Settings {
             $key,
             $label,
             array( $this, $callback ),
-            'laut-fm-sticky-player',
+            self::PAGE_SLUG,
             $section
         );
     }
@@ -138,12 +155,17 @@ class LFSP_Admin_Settings {
 
         $s['station_name']      = sanitize_key( $input['station_name'] ?? '' );
         $s['station_slogan']    = sanitize_text_field( $input['station_slogan'] ?? '' );
-        $s['player_position']   = in_array( ( $input['player_position'] ?? 'bottom' ), array( 'bottom', 'top' ), true ) ? $input['player_position'] : 'bottom';
-        $s['color_accent_1']    = sanitize_hex_color( $input['color_accent_1'] ?? '#ff003c' ) ?: '#ff003c';
-        $s['color_accent_2']    = sanitize_hex_color( $input['color_accent_2'] ?? '#00f0ff' ) ?: '#00f0ff';
-        $s['color_bg']          = sanitize_hex_color( $input['color_bg'] ?? '#101010' ) ?: '#101010';
-        $s['color_text']        = sanitize_hex_color( $input['color_text'] ?? '#ffffff' ) ?: '#ffffff';
-        $s['player_height']     = absint( $input['player_height'] ?? 90 );
+        $s['custom_stream_url'] = esc_url_raw( $input['custom_stream_url'] ?? '' );
+
+        $position = $input['player_position'] ?? 'bottom';
+        $s['player_position'] = in_array( $position, self::ALLOWED_POSITIONS, true ) ? $position : 'bottom';
+
+        $s['color_accent_1'] = sanitize_hex_color( $input['color_accent_1'] ?? '#ff003c' ) ?: '#ff003c';
+        $s['color_accent_2'] = sanitize_hex_color( $input['color_accent_2'] ?? '#00f0ff' ) ?: '#00f0ff';
+        $s['color_bg']       = sanitize_hex_color( $input['color_bg'] ?? '#101010' ) ?: '#101010';
+        $s['color_text']     = sanitize_hex_color( $input['color_text'] ?? '#ffffff' ) ?: '#ffffff';
+        $s['player_height']  = absint( $input['player_height'] ?? 90 );
+
         $s['autoplay']          = ! empty( $input['autoplay'] );
         $s['show_clock']        = ! empty( $input['show_clock'] );
         $s['show_toggle']       = ! empty( $input['show_toggle'] );
@@ -152,41 +174,43 @@ class LFSP_Admin_Settings {
         $s['default_closed']    = ! empty( $input['default_closed'] );
         $s['stream_link_label'] = sanitize_text_field( $input['stream_link_label'] ?? 'STREAM' );
 
+        $mode = sanitize_key( $input['playback_mode'] ?? 'popup_website' );
+        $s['playback_mode'] = in_array( $mode, self::ALLOWED_PLAYBACK, true ) ? $mode : 'popup_website';
+
         if ( ! empty( $s['station_name'] ) && ! LFSP_Lautfm_API::station_exists( $s['station_name'] ) ) {
             add_settings_error(
-                'lfsp_settings',
+                self::OPTION_NAME,
                 'lfsp_invalid_station',
                 sprintf(
-                    /* translators: %s: Station name */
-                    __( 'Station "%s" was not found on laut.fm. Please check the name.', 'laut-fm-sticky-player' ),
+                    __( 'Station "%s" was not found on laut.fm. Please check the name.', self::TEXT_DOMAIN ),
                     esc_html( $s['station_name'] )
                 ),
                 'error'
             );
         }
 
-        $old = get_option( 'lfsp_settings', array() );
+        $old = get_option( self::OPTION_NAME, array() );
         if ( ( $old['station_name'] ?? '' ) !== $s['station_name'] ) {
-            delete_transient( 'lfsp_station_' . md5( $old['station_name'] ?? '' ) );
-            delete_transient( 'lfsp_lastsongs_' . md5( $old['station_name'] ?? '' ) );
-            delete_transient( 'lfsp_song_' . md5( $old['station_name'] ?? '' ) );
+            $old_hash = md5( $old['station_name'] ?? '' );
+            delete_transient( 'lfsp_station_' . $old_hash );
+            delete_transient( 'lfsp_lastsongs_' . $old_hash );
+            delete_transient( 'lfsp_song_' . $old_hash );
         }
-
-        $s['playback_mode']     = sanitize_key( $input['playback_mode'] ?? 'popup_website' );
-        $s['custom_stream_url'] = esc_url_raw( $input['custom_stream_url'] ?? '' );
 
         return $s;
     }
 
     private function get_setting( $key, $default = '' ) {
-        $settings = get_option( 'lfsp_settings', array() );
+        $settings = get_option( self::OPTION_NAME, array() );
         return $settings[ $key ] ?? $default;
     }
+
+    // --- Field Renderers ---
 
     public function field_station_name() {
         $v = $this->get_setting( 'station_name', '' );
         echo '<input type="text" name="lfsp_settings[station_name]" value="' . esc_attr( $v ) . '" class="regular-text" />';
-        echo '<p class="description">' . esc_html__( 'Example: "youfm" (laut.fm station slug)', 'laut-fm-sticky-player' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Example: "youfm" (laut.fm station slug)', self::TEXT_DOMAIN ) . '</p>';
     }
 
     public function field_station_slogan() {
@@ -197,14 +221,21 @@ class LFSP_Admin_Settings {
     public function field_custom_stream_url() {
         $v = $this->get_setting( 'custom_stream_url', '' );
         echo '<input type="url" name="lfsp_settings[custom_stream_url]" value="' . esc_attr( $v ) . '" class="regular-text" />';
-        echo '<p class="description">' . esc_html__( 'If set, this URL will be used instead of the default laut.fm stream URL.', 'laut-fm-sticky-player' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'If set, this URL will be used instead of the default laut.fm stream URL (forces inline playback).', self::TEXT_DOMAIN ) . '</p>';
     }
 
     public function field_player_position() {
         $v = $this->get_setting( 'player_position', 'bottom' );
+        $options = array(
+            'bottom' => __( 'Bottom', self::TEXT_DOMAIN ),
+            'top'    => __( 'Top', self::TEXT_DOMAIN ),
+            'left'   => __( 'Left', self::TEXT_DOMAIN ),
+            'right'  => __( 'Right', self::TEXT_DOMAIN ),
+        );
         echo '<select name="lfsp_settings[player_position]">';
-        echo '<option value="bottom"' . selected( $v, 'bottom', false ) . '>' . esc_html__( 'Bottom', 'laut-fm-sticky-player' ) . '</option>';
-        echo '<option value="top"' . selected( $v, 'top', false ) . '>' . esc_html__( 'Top', 'laut-fm-sticky-player' ) . '</option>';
+        foreach ( $options as $value => $label ) {
+            echo '<option value="' . esc_attr( $value ) . '"' . selected( $v, $value, false ) . '>' . esc_html( $label ) . '</option>';
+        }
         echo '</select>';
     }
 
@@ -215,42 +246,42 @@ class LFSP_Admin_Settings {
 
     public function field_color_accent_1() {
         $v = $this->get_setting( 'color_accent_1', '#ff003c' );
-        echo '<input type="text" class="lfsp-color" name="lfsp_settings[color_accent_1]" value="' . esc_attr( $v ) . '" />';
+        echo '<input type="text" class="lfsp-color-picker" name="lfsp_settings[color_accent_1]" value="' . esc_attr( $v ) . '" />';
     }
 
     public function field_color_accent_2() {
         $v = $this->get_setting( 'color_accent_2', '#00f0ff' );
-        echo '<input type="text" class="lfsp-color" name="lfsp_settings[color_accent_2]" value="' . esc_attr( $v ) . '" />';
+        echo '<input type="text" class="lfsp-color-picker" name="lfsp_settings[color_accent_2]" value="' . esc_attr( $v ) . '" />';
     }
 
     public function field_color_bg() {
         $v = $this->get_setting( 'color_bg', '#101010' );
-        echo '<input type="text" class="lfsp-color" name="lfsp_settings[color_bg]" value="' . esc_attr( $v ) . '" />';
+        echo '<input type="text" class="lfsp-color-picker" name="lfsp_settings[color_bg]" value="' . esc_attr( $v ) . '" />';
     }
 
     public function field_color_text() {
         $v = $this->get_setting( 'color_text', '#ffffff' );
-        echo '<input type="text" class="lfsp-color" name="lfsp_settings[color_text]" value="' . esc_attr( $v ) . '" />';
+        echo '<input type="text" class="lfsp-color-picker" name="lfsp_settings[color_text]" value="' . esc_attr( $v ) . '" />';
     }
 
     public function field_autoplay() {
-        $this->render_checkbox( 'autoplay', __( 'Start playing automatically (may be blocked by browsers)', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'autoplay', __( 'Start playing automatically (may be blocked by browsers)', self::TEXT_DOMAIN ) );
     }
 
     public function field_show_clock() {
-        $this->render_checkbox( 'show_clock', __( 'Show a live clock in the player', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'show_clock', __( 'Show a live clock in the player', self::TEXT_DOMAIN ) );
     }
 
     public function field_show_toggle() {
-        $this->render_checkbox( 'show_toggle', __( 'Show a toggle button to collapse/expand the player', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'show_toggle', __( 'Show a toggle button to collapse/expand the player', self::TEXT_DOMAIN ) );
     }
 
     public function field_show_mobile() {
-        $this->render_checkbox( 'show_on_mobile', __( 'Display the player on mobile devices', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'show_on_mobile', __( 'Display the player on mobile devices', self::TEXT_DOMAIN ) );
     }
 
     public function field_default_closed() {
-        $this->render_checkbox( 'default_closed', __( 'Player starts collapsed (user can still open it)', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'default_closed', __( 'Player starts collapsed (user can still open it)', self::TEXT_DOMAIN ) );
     }
 
     public function field_stream_label() {
@@ -259,21 +290,29 @@ class LFSP_Admin_Settings {
     }
 
     public function field_show_soundnode() {
-        $this->render_checkbox( 'show_soundnode', __( 'Show a small "soundnode.de" link in the player', 'laut-fm-sticky-player' ) );
+        $this->render_checkbox( 'show_soundnode', __( 'Show a small "soundnode.de" link in the player', self::TEXT_DOMAIN ) );
         echo '<p class="description">' . sprintf(
-            /* translators: %s: Link to soundnode.de */
-            esc_html__( '%s lists all laut.fm radio stations as an aggregator.', 'laut-fm-sticky-player' ),
+            esc_html__( '%s lists all laut.fm radio stations as an aggregator.', self::TEXT_DOMAIN ),
             '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
         ) . '</p>';
     }
 
     public function field_playback_mode() {
         $v = $this->get_setting( 'playback_mode', 'popup_website' );
-        echo '<select name="lfsp_settings[playback_mode]">';
-        echo '<option value="popup_website"' . selected( $v, 'popup_website', false ) . '>' . esc_html__( 'Popup: Open station website', 'laut-fm-sticky-player' ) . '</option>';
-        echo '<option value="inline"' . selected( $v, 'inline', false ) . '>' . esc_html__( 'Inline: Play in sticky player', 'laut-fm-sticky-player' ) . '</option>';
-        echo '<option value="custom_url"' . selected( $v, 'custom_url', false ) . '>' . esc_html__( 'Custom URL: Use custom stream URL', 'laut-fm-sticky-player' ) . '</option>';
+        $options = array(
+            'popup_website' => __( 'Popup: Open station website', self::TEXT_DOMAIN ),
+            'popup_stream'  => __( 'Popup: Open stream only', self::TEXT_DOMAIN ),
+            'inline'        => __( 'Inline: Play in sticky player', self::TEXT_DOMAIN ),
+        );
+        echo '<select id="lfsp-playback-mode" name="lfsp_settings[playback_mode]">';
+        foreach ( $options as $value => $label ) {
+            echo '<option value="' . esc_attr( $value ) . '"' . selected( $v, $value, false ) . '>' . esc_html( $label ) . '</option>';
+        }
         echo '</select>';
+
+        echo '<p class="description lfsp-mode-info" data-mode="popup_website">' . esc_html__( 'Opens the laut.fm station page in a popup window.', self::TEXT_DOMAIN ) . '</p>';
+        echo '<p class="description lfsp-mode-info" data-mode="popup_stream">' . esc_html__( 'Opens only the audio stream in a small popup window.', self::TEXT_DOMAIN ) . '</p>';
+        echo '<p class="description lfsp-mode-info" data-mode="inline">' . esc_html__( 'Plays the audio stream directly inside the sticky player.', self::TEXT_DOMAIN ) . '</p>';
     }
 
     private function render_checkbox( $key, $label ) {
@@ -286,13 +325,13 @@ class LFSP_Admin_Settings {
     public function render_page() {
         ?>
         <div class="wrap lfsp-wrap">
-            <h1><?php echo esc_html__( 'Laut.fm Sticky Player Settings', 'laut-fm-sticky-player' ); ?></h1>
+            <h1><?php echo esc_html__( 'SoundNode Sticky Player Settings', self::TEXT_DOMAIN ); ?></h1>
 
             <form method="post" action="options.php">
                 <?php
-                settings_fields( 'lfsp_options_group' );
-                do_settings_sections( 'laut-fm-sticky-player' );
-                submit_button( __( 'Save Settings', 'laut-fm-sticky-player' ) );
+                settings_fields( self::OPTION_GROUP );
+                do_settings_sections( self::PAGE_SLUG );
+                submit_button( __( 'Save Settings', self::TEXT_DOMAIN ) );
                 ?>
             </form>
 
@@ -301,9 +340,8 @@ class LFSP_Admin_Settings {
             <p style="color: #666; font-size: 12px;">
                 <?php
                 printf(
-                    /* translators: 1: Plugin name, 2: Link to soundnode.de */
-                    esc_html__( '%1$s | Discover all laut.fm stations on %2$s', 'laut-fm-sticky-player' ),
-                    '<strong>Laut.fm Sticky Player</strong>',
+                    esc_html__( '%1$s | Discover all laut.fm stations on %2$s', self::TEXT_DOMAIN ),
+                    '<strong>SoundNode Sticky Player</strong>',
                     '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
                 );
                 ?>

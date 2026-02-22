@@ -5,6 +5,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class LFSP_Sticky_Player {
 
+    private const TEXT_DOMAIN      = 'soundnode-sticky-player-for-laut-fm';
+    private const ALLOWED_PLAYBACK = array( 'popup_website', 'popup_stream', 'inline' );
+
     private $settings;
 
     public function __construct( $settings ) {
@@ -39,16 +42,11 @@ class LFSP_Sticky_Player {
             true
         );
 
-        $station        = sanitize_key( $this->settings['station_name'] );
-        $custom_stream  = trim( $this->settings['custom_stream_url'] ?? '' );
-        $playback_mode  = $this->settings['playback_mode'] ?? 'popup_website';
-        $use_custom     = ! empty( $custom_stream );
+        $station       = sanitize_key( $this->settings['station_name'] );
+        $custom_stream = trim( $this->settings['custom_stream_url'] ?? '' );
+        $playback_mode = $this->resolve_playback_mode( $custom_stream );
 
-        if ( $use_custom ) {
-            $playback_mode = 'inline';
-        }
-
-        $stream_url = $use_custom
+        $stream_url = ! empty( $custom_stream )
             ? esc_url( $custom_stream )
             : esc_url( LFSP_Lautfm_API::get_stream_url( $station ) );
 
@@ -63,28 +61,38 @@ class LFSP_Sticky_Player {
         }
 
         wp_localize_script( 'lfsp-sticky-player', 'lfspConfig', array(
-            'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
-            'nonce'           => wp_create_nonce( 'lfsp_nonce' ),
-            'streamUrl'       => $stream_url,
-            'stationName'     => $station,
-            'autoplay'        => ! empty( $this->settings['autoplay'] ) && 'inline' === $playback_mode,
-            'defaultClosed'   => ! empty( $this->settings['default_closed'] ),
-            'updateInterval'  => 30000,
-            'playbackMode'    => $playback_mode,
-            'popupUrl'        => esc_url( $popup_url ),
-            'popupWidth'      => $popup_width,
-            'popupHeight'     => $popup_height,
-            'i18n'            => array(
-                'play'           => esc_html__( 'Play', 'laut-fm-sticky-player' ),
-                'pause'          => esc_html__( 'Pause', 'laut-fm-sticky-player' ),
-                'loading'        => esc_html__( 'Loading...', 'laut-fm-sticky-player' ),
-                'liveNow'        => esc_html__( 'Live', 'laut-fm-sticky-player' ),
-                'toggleOpen'     => esc_html__( 'Open Player', 'laut-fm-sticky-player' ),
-                'toggleClose'    => esc_html__( 'Close Player', 'laut-fm-sticky-player' ),
-                'openPopup'      => esc_html__( 'Open laut.fm', 'laut-fm-sticky-player' ),
-                'openStreamPopup'=> esc_html__( 'Open Stream', 'laut-fm-sticky-player' ),
+            'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+            'nonce'          => wp_create_nonce( 'lfsp_nonce' ),
+            'streamUrl'      => $stream_url,
+            'stationName'    => $station,
+            'autoplay'       => ! empty( $this->settings['autoplay'] ) && 'inline' === $playback_mode,
+            'defaultClosed'  => ! empty( $this->settings['default_closed'] ),
+            'updateInterval' => 30000,
+            'playbackMode'   => $playback_mode,
+            'popupUrl'       => esc_url( $popup_url ),
+            'popupWidth'     => $popup_width,
+            'popupHeight'    => $popup_height,
+            'i18n'           => array(
+                'play'            => esc_html__( 'Play', self::TEXT_DOMAIN ),
+                'pause'           => esc_html__( 'Pause', self::TEXT_DOMAIN ),
+                'loading'         => esc_html__( 'Loading...', self::TEXT_DOMAIN ),
+                'liveNow'         => esc_html__( 'Live', self::TEXT_DOMAIN ),
+                'toggleOpen'      => esc_html__( 'Open Player', self::TEXT_DOMAIN ),
+                'toggleClose'     => esc_html__( 'Close Player', self::TEXT_DOMAIN ),
+                'openPopup'       => esc_html__( 'Open laut.fm', self::TEXT_DOMAIN ),
+                'openStreamPopup' => esc_html__( 'Open Stream', self::TEXT_DOMAIN ),
             ),
         ) );
+    }
+
+    private function resolve_playback_mode( $custom_stream ) {
+        if ( ! empty( $custom_stream ) ) {
+            return 'inline';
+        }
+
+        $mode = $this->settings['playback_mode'] ?? 'popup_website';
+
+        return in_array( $mode, self::ALLOWED_PLAYBACK, true ) ? $mode : 'popup_website';
     }
 
     private function get_custom_css() {
@@ -125,14 +133,14 @@ class LFSP_Sticky_Player {
         <div id="lfsp-sticky-wrapper"
              class="lfsp-wrapper lfsp-position-<?php echo esc_attr( $position ); ?><?php echo esc_attr( $mobile_class . $wrapper_class ); ?>"
              role="region"
-             aria-label="<?php esc_attr_e( 'Radio Player', 'laut-fm-sticky-player' ); ?>"
+             aria-label="<?php esc_attr_e( 'Radio Player', self::TEXT_DOMAIN ); ?>"
              data-station="<?php echo esc_attr( $station ); ?>">
 
             <?php if ( $show_toggle ) : ?>
             <button id="lfsp-toggle-btn"
                     class="lfsp-toggle-btn"
                     type="button"
-                    aria-label="<?php esc_attr_e( 'Toggle Player', 'laut-fm-sticky-player' ); ?>"
+                    aria-label="<?php esc_attr_e( 'Toggle Player', self::TEXT_DOMAIN ); ?>"
                     aria-expanded="<?php echo esc_attr( $aria_expanded ); ?>">
                 <span class="lfsp-toggle-icon" aria-hidden="true">&#9660;</span>
             </button>
@@ -145,7 +153,7 @@ class LFSP_Sticky_Player {
                         <button id="lfsp-play-btn"
                                 class="lfsp-play-btn"
                                 type="button"
-                                aria-label="<?php esc_attr_e( 'Play', 'laut-fm-sticky-player' ); ?>">
+                                aria-label="<?php esc_attr_e( 'Play', self::TEXT_DOMAIN ); ?>">
                             <span class="lfsp-icon-play" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="20" height="20">
                                     <polygon points="7,3 21,12 7,21" fill="currentColor"/>
@@ -163,19 +171,19 @@ class LFSP_Sticky_Player {
                             <button id="lfsp-mute-btn"
                                     class="lfsp-mute-btn"
                                     type="button"
-                                    aria-label="<?php esc_attr_e( 'Mute', 'laut-fm-sticky-player' ); ?>">
+                                    aria-label="<?php esc_attr_e( 'Mute', self::TEXT_DOMAIN ); ?>">
                                 <span class="lfsp-volume-icon" aria-hidden="true">&#128266;</span>
                             </button>
                             <input type="range"
                                    id="lfsp-volume-slider"
                                    class="lfsp-volume-slider"
                                    min="0" max="100" value="80"
-                                   aria-label="<?php esc_attr_e( 'Volume', 'laut-fm-sticky-player' ); ?>">
+                                   aria-label="<?php esc_attr_e( 'Volume', self::TEXT_DOMAIN ); ?>">
                         </div>
                     </div>
 
                     <div class="lfsp-song-info">
-                        <div id="lfsp-song-title" class="lfsp-title"><?php esc_html_e( 'Loading...', 'laut-fm-sticky-player' ); ?></div>
+                        <div id="lfsp-song-title" class="lfsp-title"><?php esc_html_e( 'Loading...', self::TEXT_DOMAIN ); ?></div>
                         <?php if ( ! empty( $slogan ) ) : ?>
                         <div class="lfsp-subtitle"><?php echo esc_html( $slogan ); ?></div>
                         <?php endif; ?>
@@ -198,7 +206,7 @@ class LFSP_Sticky_Player {
                            target="_blank"
                            rel="noopener noreferrer"
                            class="lfsp-link lfsp-soundnode-link"
-                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', 'soundnode-sticky-player-for-laut-fm' ); ?>">
+                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', self::TEXT_DOMAIN ); ?>">
                             soundnode.de
                         </a>
                         <?php endif; ?>
