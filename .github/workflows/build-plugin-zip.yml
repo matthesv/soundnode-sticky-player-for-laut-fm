@@ -2,8 +2,11 @@ name: Build WordPress plugin ZIP
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*.*.*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -11,7 +14,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,6 +22,7 @@ jobs:
         run: |
           echo "PLUGIN_SLUG=laut-fm-sticky-player" >> $GITHUB_ENV
           echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       - name: Build dist folder
         run: |
@@ -44,16 +47,19 @@ jobs:
       - name: Create ZIP
         run: |
           cd dist
-          zip -r "../${PLUGIN_SLUG}-${VERSION}.zip" "${PLUGIN_SLUG}"
+          ZIP_NAME="${PLUGIN_SLUG}-${SHORT_SHA}.zip"
+          zip -r "../${ZIP_NAME}" "${PLUGIN_SLUG}"
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
 
-      - name: Upload artifact
+      - name: Upload artifact (every commit)
         uses: actions/upload-artifact@v4
         with:
-          name: plugin-zip
-          path: "${{ env.PLUGIN_SLUG }}-${{ env.VERSION }}.zip"
+          name: ${{ env.PLUGIN_SLUG }}-${{ env.SHORT_SHA }}
+          path: ${{ env.ZIP_NAME }}
 
-      - name: Create GitHub Release and attach ZIP
+      - name: Create GitHub Release and attach ZIP (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: "${{ env.PLUGIN_SLUG }}-${{ env.VERSION }}.zip"
+          files: ${{ env.ZIP_NAME }}
           generate_release_notes: true
