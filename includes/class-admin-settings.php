@@ -115,8 +115,8 @@ class LFSP_Admin_Settings {
             'lfsp_section_soundnode',
             __( '🅢 soundnode.de Integration', 'soundnode-sticky-player-for-laut-fm' ),
             function () {
-                /* translators: %s: link to soundnode.de */
                 echo '<p>' . sprintf(
+                    /* translators: %s: link to soundnode.de */
                     esc_html__( 'Show a link to %s — a radio aggregator listing all laut.fm stations.', 'soundnode-sticky-player-for-laut-fm' ),
                     '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
                 ) . '</p>';
@@ -181,8 +181,8 @@ class LFSP_Admin_Settings {
             add_settings_error(
                 self::OPTION_NAME,
                 'lfsp_invalid_station',
-                /* translators: %s: station name entered by the user */
                 sprintf(
+                    /* translators: %s: station name entered by the user */
                     __( 'Station "%s" was not found on laut.fm. Please check the name.', 'soundnode-sticky-player-for-laut-fm' ),
                     esc_html( $s['station_name'] )
                 ),
@@ -290,8 +290,8 @@ class LFSP_Admin_Settings {
 
     public function field_show_soundnode() {
         $this->render_checkbox( 'show_soundnode', __( 'Show a small "soundnode.de" link in the player', 'soundnode-sticky-player-for-laut-fm' ) );
-        /* translators: %s: link to soundnode.de */
         echo '<p class="description">' . sprintf(
+            /* translators: %s: link to soundnode.de */
             esc_html__( '%s lists all laut.fm radio stations as an aggregator.', 'soundnode-sticky-player-for-laut-fm' ),
             '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
         ) . '</p>';
@@ -339,8 +339,8 @@ class LFSP_Admin_Settings {
 
             <p style="color: #666; font-size: 12px;">
                 <?php
-                /* translators: %1$s: plugin name (bold), %2$s: link to soundnode.de */
                 printf(
+                    /* translators: %1$s: plugin name (bold), %2$s: link to soundnode.de */
                     esc_html__( '%1$s | Discover all laut.fm stations on %2$s', 'soundnode-sticky-player-for-laut-fm' ),
                     '<strong>SoundNode Sticky Player</strong>',
                     '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
