@@ -5,7 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class LFSP_Sticky_Player {
 
-    private const TEXT_DOMAIN      = 'soundnode-sticky-player-for-laut-fm';
     private const ALLOWED_PLAYBACK = array( 'popup_website', 'popup_stream', 'inline' );
 
     private $settings;
@@ -73,14 +72,14 @@ class LFSP_Sticky_Player {
             'popupWidth'     => $popup_width,
             'popupHeight'    => $popup_height,
             'i18n'           => array(
-                'play'            => esc_html__( 'Play', self::TEXT_DOMAIN ),
-                'pause'           => esc_html__( 'Pause', self::TEXT_DOMAIN ),
-                'loading'         => esc_html__( 'Loading...', self::TEXT_DOMAIN ),
-                'liveNow'         => esc_html__( 'Live', self::TEXT_DOMAIN ),
-                'toggleOpen'      => esc_html__( 'Open Player', self::TEXT_DOMAIN ),
-                'toggleClose'     => esc_html__( 'Close Player', self::TEXT_DOMAIN ),
-                'openPopup'       => esc_html__( 'Open laut.fm', self::TEXT_DOMAIN ),
-                'openStreamPopup' => esc_html__( 'Open Stream', self::TEXT_DOMAIN ),
+                'play'            => esc_html__( 'Play', 'soundnode-sticky-player-for-laut-fm' ),
+                'pause'           => esc_html__( 'Pause', 'soundnode-sticky-player-for-laut-fm' ),
+                'loading'         => esc_html__( 'Loading...', 'soundnode-sticky-player-for-laut-fm' ),
+                'liveNow'         => esc_html__( 'Live', 'soundnode-sticky-player-for-laut-fm' ),
+                'toggleOpen'      => esc_html__( 'Open Player', 'soundnode-sticky-player-for-laut-fm' ),
+                'toggleClose'     => esc_html__( 'Close Player', 'soundnode-sticky-player-for-laut-fm' ),
+                'openPopup'       => esc_html__( 'Open laut.fm', 'soundnode-sticky-player-for-laut-fm' ),
+                'openStreamPopup' => esc_html__( 'Open Stream', 'soundnode-sticky-player-for-laut-fm' ),
             ),
         ) );
     }
@@ -133,14 +132,14 @@ class LFSP_Sticky_Player {
         <div id="lfsp-sticky-wrapper"
              class="lfsp-wrapper lfsp-position-<?php echo esc_attr( $position ); ?><?php echo esc_attr( $mobile_class . $wrapper_class ); ?>"
              role="region"
-             aria-label="<?php esc_attr_e( 'Radio Player', self::TEXT_DOMAIN ); ?>"
+             aria-label="<?php esc_attr_e( 'Radio Player', 'soundnode-sticky-player-for-laut-fm' ); ?>"
              data-station="<?php echo esc_attr( $station ); ?>">
 
             <?php if ( $show_toggle ) : ?>
             <button id="lfsp-toggle-btn"
                     class="lfsp-toggle-btn"
                     type="button"
-                    aria-label="<?php esc_attr_e( 'Toggle Player', self::TEXT_DOMAIN ); ?>"
+                    aria-label="<?php esc_attr_e( 'Toggle Player', 'soundnode-sticky-player-for-laut-fm' ); ?>"
                     aria-expanded="<?php echo esc_attr( $aria_expanded ); ?>">
                 <span class="lfsp-toggle-icon" aria-hidden="true">&#9660;</span>
             </button>
@@ -153,7 +152,7 @@ class LFSP_Sticky_Player {
                         <button id="lfsp-play-btn"
                                 class="lfsp-play-btn"
                                 type="button"
-                                aria-label="<?php esc_attr_e( 'Play', self::TEXT_DOMAIN ); ?>">
+                                aria-label="<?php esc_attr_e( 'Play', 'soundnode-sticky-player-for-laut-fm' ); ?>">
                             <span class="lfsp-icon-play" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" width="20" height="20">
                                     <polygon points="7,3 21,12 7,21" fill="currentColor"/>
@@ -171,19 +170,19 @@ class LFSP_Sticky_Player {
                             <button id="lfsp-mute-btn"
                                     class="lfsp-mute-btn"
                                     type="button"
-                                    aria-label="<?php esc_attr_e( 'Mute', self::TEXT_DOMAIN ); ?>">
+                                    aria-label="<?php esc_attr_e( 'Mute', 'soundnode-sticky-player-for-laut-fm' ); ?>">
                                 <span class="lfsp-volume-icon" aria-hidden="true">&#128266;</span>
                             </button>
                             <input type="range"
                                    id="lfsp-volume-slider"
                                    class="lfsp-volume-slider"
                                    min="0" max="100" value="80"
-                                   aria-label="<?php esc_attr_e( 'Volume', self::TEXT_DOMAIN ); ?>">
+                                   aria-label="<?php esc_attr_e( 'Volume', 'soundnode-sticky-player-for-laut-fm' ); ?>">
                         </div>
                     </div>
 
                     <div class="lfsp-song-info">
-                        <div id="lfsp-song-title" class="lfsp-title"><?php esc_html_e( 'Loading...', self::TEXT_DOMAIN ); ?></div>
+                        <div id="lfsp-song-title" class="lfsp-title"><?php esc_html_e( 'Loading...', 'soundnode-sticky-player-for-laut-fm' ); ?></div>
                         <?php if ( ! empty( $slogan ) ) : ?>
                         <div class="lfsp-subtitle"><?php echo esc_html( $slogan ); ?></div>
                         <?php endif; ?>
@@ -206,7 +205,7 @@ class LFSP_Sticky_Player {
                            target="_blank"
                            rel="noopener noreferrer"
                            class="lfsp-link lfsp-soundnode-link"
-                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', self::TEXT_DOMAIN ); ?>">
+                           title="<?php esc_attr_e( 'Discover more stations on soundnode.de', 'soundnode-sticky-player-for-laut-fm' ); ?>">
                             soundnode.de
                         </a>
                         <?php endif; ?>
