@@ -1,12 +1,8 @@
-name: Build WordPress plugin ZIP
+name: Build Release ZIP
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*.*.*"
-  workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -14,52 +10,28 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set vars
+      - name: Create plugin folder structure
         run: |
-          echo "PLUGIN_SLUG=laut-fm-sticky-player" >> $GITHUB_ENV
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
-          echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
-
-      - name: Build dist folder
-        run: |
-          mkdir -p dist/${PLUGIN_SLUG}
-
-          rsync -av --delete \
-            --exclude=".git/" \
-            --exclude=".github/" \
-            --exclude="node_modules/" \
-            --exclude="vendor/" \
-            --exclude="tests/" \
-            --exclude=".gitignore" \
-            --exclude=".gitattributes" \
-            --exclude="*.md" \
-            --exclude="package*.json" \
-            --exclude="composer.*" \
-            --exclude="phpunit.xml*" \
-            --exclude="docker-compose*.yml" \
-            --exclude="includes/plugin-update-checker/" \
-            ./ dist/${PLUGIN_SLUG}/
+          mkdir -p build/soundnode-sticky-player-for-laut-fm
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='build' \
+            --exclude='.gitignore' \
+            --exclude='node_modules' \
+            --exclude='*.md' \
+            ./ build/soundnode-sticky-player-for-laut-fm/
 
       - name: Create ZIP
-        run: |
-          cd dist
-          ZIP_NAME="${PLUGIN_SLUG}-${SHORT_SHA}.zip"
-          zip -r "../${ZIP_NAME}" "${PLUGIN_SLUG}"
-          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+        working-directory: build
+        run: zip -r soundnode-sticky-player-for-laut-fm.zip soundnode-sticky-player-for-laut-fm/
 
-      - name: Upload artifact (every commit)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.PLUGIN_SLUG }}-${{ env.SHORT_SHA }}
-          path: ${{ env.ZIP_NAME }}
-
-      - name: Create GitHub Release and attach ZIP (tags only)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload ZIP to release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.ZIP_NAME }}
-          generate_release_notes: true
+          files: build/soundnode-sticky-player-for-laut-fm.zip
