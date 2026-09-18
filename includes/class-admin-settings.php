@@ -115,8 +115,8 @@ class LFSP_Admin_Settings {
             'lfsp_section_soundnode',
             __( '🅢 soundnode.de Integration', 'soundnode-sticky-player-for-laut-fm' ),
             function () {
+                /* translators: %s: link to soundnode.de */
                 echo '<p>' . sprintf(
-                    /* translators: %s: link to soundnode.de */
                     esc_html__( 'Show a link to %s — a radio aggregator listing all laut.fm stations.', 'soundnode-sticky-player-for-laut-fm' ),
                     '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
                 ) . '</p>';
@@ -125,6 +125,7 @@ class LFSP_Admin_Settings {
         );
 
         $this->add_field( 'show_soundnode', __( 'Show soundnode.de Link', 'soundnode-sticky-player-for-laut-fm' ), 'field_show_soundnode', 'lfsp_section_soundnode' );
+        $this->add_field( 'soundnode_url_slug', __( 'soundnode.de URL', 'soundnode-sticky-player-for-laut-fm' ), 'field_soundnode_url', 'lfsp_section_soundnode' );
     }
 
     private function register_section_playback() {
@@ -173,6 +174,7 @@ class LFSP_Admin_Settings {
         $s['show_soundnode']    = ! empty( $input['show_soundnode'] );
         $s['default_closed']    = ! empty( $input['default_closed'] );
         $s['stream_link_label'] = sanitize_text_field( $input['stream_link_label'] ?? 'STREAM' );
+        $s['soundnode_url_slug'] = sanitize_title( $input['soundnode_url_slug'] ?? '' );
 
         $mode = sanitize_key( $input['playback_mode'] ?? 'popup_website' );
         $s['playback_mode'] = in_array( $mode, self::ALLOWED_PLAYBACK, true ) ? $mode : 'popup_website';
@@ -181,8 +183,8 @@ class LFSP_Admin_Settings {
             add_settings_error(
                 self::OPTION_NAME,
                 'lfsp_invalid_station',
+                /* translators: %s: station name entered by the user */
                 sprintf(
-                    /* translators: %s: station name entered by the user */
                     __( 'Station "%s" was not found on laut.fm. Please check the name.', 'soundnode-sticky-player-for-laut-fm' ),
                     esc_html( $s['station_name'] )
                 ),
@@ -289,12 +291,20 @@ class LFSP_Admin_Settings {
     }
 
     public function field_show_soundnode() {
-        $this->render_checkbox( 'show_soundnode', __( 'Show a small "soundnode.de" link in the player', 'soundnode-sticky-player-for-laut-fm' ) );
+        $this->render_checkbox( 'show_soundnode', __( 'Opt-in: Show "Powered by soundnode.de" credit link on the player', 'soundnode-sticky-player-for-laut-fm' ) );
+        /* translators: %s: link to soundnode.de */
         echo '<p class="description">' . sprintf(
-            /* translators: %s: link to soundnode.de */
             esc_html__( '%s lists all laut.fm radio stations as an aggregator.', 'soundnode-sticky-player-for-laut-fm' ),
             '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'
         ) . '</p>';
+    }
+
+    public function field_soundnode_url() {
+        $slug    = $this->get_setting( 'soundnode_url_slug', '' );
+        $station = $this->get_setting( 'station_name', '' );
+        echo '<span style="line-height:30px;margin-right:2px;">https://soundnode.de/sender/</span>';
+        echo '<input type="text" name="lfsp_settings[soundnode_url_slug]" value="' . esc_attr( $slug ) . '" placeholder="' . esc_attr( $station ) . '" class="regular-text" style="width:200px;" />';
+        echo '<p class="description">' . esc_html__( 'Pre-filled with the station name. Customize if the station has a different slug on soundnode.de.', 'soundnode-sticky-player-for-laut-fm' ) . '</p>';
     }
 
     public function field_playback_mode() {
@@ -313,6 +323,7 @@ class LFSP_Admin_Settings {
         echo '<p class="description lfsp-mode-info" data-mode="popup_website">' . esc_html__( 'Opens the laut.fm station page in a popup window.', 'soundnode-sticky-player-for-laut-fm' ) . '</p>';
         echo '<p class="description lfsp-mode-info" data-mode="popup_stream">' . esc_html__( 'Opens only the audio stream in a small popup window.', 'soundnode-sticky-player-for-laut-fm' ) . '</p>';
         echo '<p class="description lfsp-mode-info" data-mode="inline">' . esc_html__( 'Plays the audio stream directly inside the sticky player.', 'soundnode-sticky-player-for-laut-fm' ) . '</p>';
+        echo '<p class="description lfsp-mode-info" data-mode="inline" style="color: #d63638;">' . esc_html__( 'Note: Inline playback of laut.fm streams may not comply with the laut.fm terms of service. Use "Custom Stream URL" for your own streams, or choose a popup mode for laut.fm stations.', 'soundnode-sticky-player-for-laut-fm' ) . '</p>';
     }
 
     private function render_checkbox( $key, $label ) {
@@ -339,8 +350,8 @@ class LFSP_Admin_Settings {
 
             <p style="color: #666; font-size: 12px;">
                 <?php
+                /* translators: %1$s: plugin name (bold), %2$s: link to soundnode.de */
                 printf(
-                    /* translators: %1$s: plugin name (bold), %2$s: link to soundnode.de */
                     esc_html__( '%1$s | Discover all laut.fm stations on %2$s', 'soundnode-sticky-player-for-laut-fm' ),
                     '<strong>SoundNode Sticky Player</strong>',
                     '<a href="https://soundnode.de" target="_blank" rel="noopener">soundnode.de</a>'

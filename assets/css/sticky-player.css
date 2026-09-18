@@ -367,13 +367,19 @@
 }
 
 .lfsp-volume-slider {
+    --lfsp-vol: 80%;
     width: 70px;
-    height: 4px;
+    height: 6px;
     -webkit-appearance: none;
     appearance: none;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
+    background: linear-gradient(to right,
+        var(--lfsp-accent-2, #00f0ff) 0%,
+        var(--lfsp-accent-2, #00f0ff) var(--lfsp-vol, 80%),
+        rgba(255, 255, 255, 0.35) var(--lfsp-vol, 80%),
+        rgba(255, 255, 255, 0.35) 100%);
+    border-radius: 999px;
     outline: none;
+    cursor: pointer;
 }
 
 .lfsp-position-left .lfsp-volume-slider,
@@ -383,20 +389,35 @@
 
 .lfsp-volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--lfsp-accent-2, #00f0ff);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
     cursor: pointer;
 }
 
+.lfsp-volume-slider::-moz-range-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+}
+
+.lfsp-volume-slider::-moz-range-progress {
+    height: 6px;
+    background: var(--lfsp-accent-2, #00f0ff);
+    border-radius: 999px;
+}
+
 .lfsp-volume-slider::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: var(--lfsp-accent-2, #00f0ff);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 6px rgba(0, 240, 255, 0.7);
     cursor: pointer;
-    border: none;
 }
 
 /* === SONG INFO === */

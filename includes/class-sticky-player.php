@@ -200,8 +200,10 @@ class LFSP_Sticky_Player {
                             <?php echo esc_html( $stream_label ); ?>
                         </a>
 
-                        <?php if ( $show_soundnode ) : ?>
-                        <a href="<?php echo esc_url( LFSP_Lautfm_API::get_soundnode_url( $station ) ); ?>"
+                        <?php if ( $show_soundnode ) :
+                            $soundnode_slug = ! empty( $this->settings['soundnode_url_slug'] ) ? sanitize_key( $this->settings['soundnode_url_slug'] ) : $station;
+                        ?>
+                        <a href="<?php echo esc_url( LFSP_Lautfm_API::get_soundnode_url( $soundnode_slug ) ); ?>"
                            target="_blank"
                            rel="noopener noreferrer"
                            class="lfsp-link lfsp-soundnode-link"

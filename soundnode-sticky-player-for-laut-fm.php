@@ -3,7 +3,7 @@
  * Plugin Name:       SoundNode Sticky Player for laut.fm
  * Plugin URI:        https://github.com/matthesv/laut-fm-sticky-player
  * Description:       A customizable sticky audio player for any laut.fm radio station.
- * Version:           1.4.0
+ * Version:           1.5.1
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            Matthes Vogel
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'LFSP_VERSION', '1.4.0' );
+define( 'LFSP_VERSION', '1.5.1' );
 define( 'LFSP_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'LFSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'LFSP_BASENAME', plugin_basename( __FILE__ ) );
@@ -36,13 +36,14 @@ function lfsp_activate() {
         'show_clock'        => true,
         'show_toggle'       => true,
         'show_on_mobile'    => true,
-        'show_soundnode'    => true,
+        'show_soundnode'    => false,
         'player_height'     => 90,
         'autoplay'          => false,
         'stream_link_label' => 'STREAM',
         'default_closed'    => false,
         'playback_mode'     => 'popup_website',
         'custom_stream_url' => '',
+        'soundnode_url_slug' => '',
     );
     add_option( 'lfsp_settings', $defaults );
     add_option( 'lfsp_version', LFSP_VERSION );

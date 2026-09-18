@@ -74,6 +74,8 @@
         if (els.volumeSlider) els.volumeSlider.addEventListener('input', handleVolume);
         if (els.muteBtn) els.muteBtn.addEventListener('click', toggleMute);
 
+        updateVolumeFill();
+
         restorePlayerState();
 
         updateClock();
@@ -216,6 +218,7 @@
     }
 
     function handleVolume() {
+        updateVolumeFill();
         if (!audio || !els.volumeSlider) return;
         audio.volume = els.volumeSlider.value / 100;
         if (isMuted && audio.volume > 0) {
@@ -223,6 +226,11 @@
             audio.muted = false;
             updateMuteIcon();
         }
+    }
+
+    function updateVolumeFill() {
+        if (!els.volumeSlider) return;
+        els.volumeSlider.style.setProperty('--lfsp-vol', els.volumeSlider.value + '%');
     }
 
     function toggleMute() {

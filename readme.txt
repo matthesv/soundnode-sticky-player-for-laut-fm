@@ -2,9 +2,9 @@
 Contributors: matthesv
 Tags: laut.fm, radio, stream, player, webradio
 Requires at least: 5.8
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,8 +30,15 @@ A customizable sticky audio player for any laut.fm radio station. Stream live ra
 * **Optional collapse/expand toggle**
 * **Optional "soundnode.de" link** (can be disabled)
 
-= Privacy & data =
-This plugin does not create user accounts and does not track users. It only loads the configured stream and (optionally) retrieves publicly available station metadata for display.
+== External services ==
+
+This plugin connects to the external laut.fm API (`https://api.laut.fm`) to retrieve and display public radio station information, such as the currently playing song and recently played tracks. 
+
+When the plugin fetches this data, it sends requests containing the station name (configured by the site administrator) to the laut.fm API. The plugin only loads the configured stream and retrieves publicly available station metadata for display. It does not create user accounts, does not track users, and no personally identifiable information (PII) of the site visitors is sent to the API by the plugin's server-side requests.
+
+This service is provided by laut.ag. You can find their legal policies here:
+* Terms of Service: https://laut.fm/pages/terms_and_conditions
+* Privacy Policy: https://laut.fm/pages/privacy
 
 == Installation ==
 
@@ -60,15 +67,17 @@ Yes. If your cache plugin caches HTML aggressively, make sure the player assets 
 = Is the player visible for all visitors? =
 Yes, as long as a station is configured. If no station is set, only admins see a small notice on the frontend.
 
-== Screenshots ==
-
-1. Sticky player on the frontend (bottom position)
-2. Sticky player on the frontend (top position)
-3. Settings page: station configuration
-4. Settings page: design options (colors, height)
-5. Settings page: feature toggles (clock, mobile, collapse)
-
 == Changelog ==
+
+= 1.5.1 =
+* Improved: volume slider now shows a filled progress track (colored up to the current level) instead of a plain bar
+* Confirmed compatibility with WordPress 7.1
+
+= 1.5.0 =
+* New: Customizable soundnode.de URL slug in settings
+* The URL path for the soundnode.de link can now be individually configured per station
+* Default: pre-filled with the laut.fm station name
+* Added terms of service notice when using inline playback mode with laut.fm streams
 
 = 1.4.0 =
 * Rebranding: consistent use of "SoundNode Sticky Player" throughout the plugin
@@ -102,6 +111,9 @@ Maintenance update recommended for best compatibility with current WordPress ver
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+New feature: the soundnode.de link URL is now customizable in the settings. Added terms of service notice for inline playback.
 
 = 1.4.0 =
 Recommended update. Includes rebranding, new player positions (left/right), new popup stream mode, and several bug fixes.
